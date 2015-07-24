@@ -1,4 +1,7 @@
+GenomeKey
++++++++++++
 
+`GenomeKey Documentation <http://enterprisegenomics.github.io/GenomeKey/>`_
 
 
 Build Docs
@@ -9,8 +12,9 @@ Build Docs
 .. code-block:: bash
 
     source ~/projects/GenomeKey/ve/bin/activate
+    # pip install ghp-imports
     make html
-    open _build/html/index.html
+    ghp-import -n -m 'ghp' -p docs/_build/html
 
 
 
