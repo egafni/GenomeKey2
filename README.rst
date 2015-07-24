@@ -13,6 +13,7 @@ Build Docs
 
     source ~/projects/GenomeKey/ve/bin/activate
     # pip install ghp-imports
+    cd ~/projects/GenomeKey/docs
     make html
     ghp-import -n -m 'ghp' -p docs/_build/html
 
