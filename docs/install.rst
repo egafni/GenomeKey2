@@ -11,8 +11,8 @@ Install GenomeKey
     git clone git@github.com:LPM-HMS/GenomeKey_v2.git GenomeKey
     cd GenomeKey
 
-    #virtualenv ve
-    #source ve/bin/activate
+    virtualenv ve
+    source ve/bin/activate
 
     pip install .
 

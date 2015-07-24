@@ -1,5 +1,11 @@
+.. _run:
+
 Running GenomeKey
 ==================
+
+
+Web Interface
++++++++++++++++
 
 .. code-block:: bash
 

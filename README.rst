@@ -1,25 +1,25 @@
-Create Data Dir
-================
 
-Download GATK Bundle and various bioinformatics tools
 
-export DATA_DIR=/mnt/data
 
-Bundle
-+++++++++
+Build Docs
++++++++++++
+
+.. todo:: Host this somewhere...
 
 .. code-block:: bash
 
-    mkdir -p $DATA_DIR/bundle/2.8/b37
-    cd $DATA_DIR/bundle/2.8/b37
-    wget ftp://gsapubftp-anonymous@ftp.broadinstitute.org/bundle/2.8/b37/* -R "*CEU*,*NA12878*,*done*"
+    source ~/projects/GenomeKey/ve/bin/activate
+    make html
+    open _build/html/index.html
+
 
 
 Testing
-++++
+++++++++
 
 .. code-block:: bash
 
+    # test data is currently in s3 in genomekey-share
 
     source ~/projects/GenomeKey/ve/bin/activate
     ~/bin/genomekey -d dna-seq -n "Test" -t tiny_target.bed input_tiny.tsv
