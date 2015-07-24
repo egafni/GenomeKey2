@@ -28,4 +28,4 @@ This will build GenomeKey docs, commit the files to the gh-pages branch, and rep
     # pip install ghp-imports
     cd ~/projects/GenomeKey/docs
     make html
-    ghp-import -n -m 'ghp' -p _build/html
+    ghp-import -n -m 'deploy docs' -p _build/html
