@@ -1,0 +1,105 @@
+[global]
+DEFAULT_TEMPLATE=genomekey
+#ENABLE_EXPERIMENTAL=True
+#REFRESH_INTERVAL=30
+#WEB_BROWSER=chromium
+# split the config into multiple files
+INCLUDE=~/.starcluster/aws_credentials
+
+################################
+## Defining Cluster Templates ##
+################################
+
+[cluster genomekey]
+KEYNAME = egafni_starcluster_west2
+CLUSTER_SIZE = 1
+CLUSTER_USER = genomekey
+CLUSTER_SHELL = bash
+NODE_IMAGE_ID = ami-486afe78  # starcluster -r us-west-2 listpublic
+# (options: m3.large, c3.8xlarge, i2.8xlarge, t2.micro, hs1.8xlarge, c1.xlarge, r3.4xlarge, g2.2xlarge, m1.small, c1.medium, m3.2xlarge, c3.2xlarge, m2.xlarge, m2.2xlarge, t2.small, r3.2xlarge, t1.micro, cr1.8xlarge, r3.8xlarge, cc1.4xlarge, m1.medium, r3.large, c3.xlarge, i2.xlarge, m3.medium, cc2.8xlarge, m1.large, cg1.4xlarge, i2.2xlarge, c3.large, i2.4xlarge, c3.4xlarge, r3.xlarge, t2.medium, hi1.4xlarge, m2.4xlarge, m1.xlarge, m3.xlarge)
+NODE_INSTANCE_TYPE = c3.2xlarge
+#NODE_INSTANCE_TYPE = m3.medium
+#MASTER_INSTANCE_TYPE = m1.small
+#MASTER_IMAGE_ID = ami-3393a45a (OPTIONAL)
+AVAILABILITY_ZONE = us-west-2a
+#VOLUMES = oceandata, biodata
+disable_queue = True # necessary to customize sge options
+PLUGINS = createusers, sge, genomekey
+PERMISSIONS = ssh, http2, ipython_notebook, ganglia
+SPOT_BID = 0.50
+#USERDATA_SCRIPTS = /path/to/script1, /path/to/script2
+
+[cluster genomekey2]
+EXTENDS = genomekey
+NODE_IMAGE_ID = ami-6b211202
+KEYNAME = egafni_starcluster_east
+AVAILABILITY_ZONE = us-east-1a
+
+#############################
+## Configuring EBS Volumes ##
+#############################
+
+# [volume biodata]
+# attach vol-c9999999 to /home on master node and NFS-shre to worker nodes
+# VOLUME_ID = vol-c999999
+# MOUNT_PATH = /home
+
+
+############################################
+## Configuring Security Group Permissions ##
+############################################
+# Sections starting with "permission" define security group rules to
+# automatically apply to newly created clusters. IP_PROTOCOL in the following
+# examples can be can be: tcp, udp, or icmp. CIDR_IP defaults to 0.0.0.0/0 or
+# "open to the # world"
+
+[permission http]
+IP_PROTOCOL = tcp
+FROM_PORT = 80
+TO_PORT = 80
+
+[permission http2]
+IP_PROTOCOL = tcp
+FROM_PORT = 5000
+TO_PORT = 5000
+
+[permission ipython_notebook]
+IP_PROTOCOL = tcp
+FROM_PORT = 8888
+TO_PORT = 8888
+
+[permission ssh]
+IP_PROTOCOL = tcp
+FROM_PORT = 22
+TO_PORT = 22
+
+[permission ganglia]
+IP_PROTOCOL = tcp
+FROM_PORT = 8649
+TO_PORT = 8649
+
+
+
+######################
+## Built-in Plugins ##
+######################
+# The following plugins ship with StarCluster and should work out-of-the-box.
+# Uncomment as needed. Don't forget to update your PLUGINS list!
+# See http://star.mit.edu/cluster/docs/latest/plugins for plugin details.
+#
+# Use this plugin to install one or more packages on all nodes
+# [plugin pkginstaller]
+# SETUP_CLASS = starcluster.plugins.pkginstaller.PackageInstaller
+# PACKAGES = graphviz, graphviz-dev
+
+[plugin sge]
+SETUP_CLASS = starcluster.plugins.sge.SGEPlugin
+MASTER_IS_EXEC_HOST = True
+
+[plugin createusers]
+SETUP_CLASS = starcluster.plugins.users.CreateUsers
+usernames = genomekey
+DOWNLOAD_KEYS = True
+
+[plugin genomekey]
+SETUP_CLASS = genomekey_deploy.starcluster.genomekey.GenomeKeySetup
