@@ -9,7 +9,7 @@ Contents:
 
    install
    aws
-   run
+   running
 
 
 

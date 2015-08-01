@@ -1,0 +1,17 @@
+.. _running:
+
+Running GenomeKey
+==================
+
+.. code-block:: bash
+
+    source ~/projects/GenomeKey/ve/bin/activate
+    genomekey dna-seq -i input_files.tsv -t target.bed -n 'Workflow_Name'
+
+
+Web Interface
++++++++++++++++
+
+.. code-block:: bash
+
+    genomekey runweb -H 0.0.0.0
