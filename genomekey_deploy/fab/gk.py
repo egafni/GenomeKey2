@@ -5,8 +5,8 @@ from fabric.operations import local
 from fabric.state import env
 from fabric.api import run, hide, cd, settings
 
-from ..util import tobool
-from ..session import VE
+from genomekey_deploy.util import tobool
+from genomekey_deploy.session import VE
 
 
 __author__ = 'erik'
@@ -30,9 +30,9 @@ def install_genomekey(user='genomekey', reinstall=False, dev=True):
             with cd('~/projects'):
                 if dev:
                     # Rsync from local projects
-                    local('rsync -avP -e "ssh -i {0}" ~/projects/GenomeKey {1}@{2}:~/projects'.format(
+                    local('rsync -avP -e "ssh -o StrictHostKeyChecking=no -i {0}" ~/projects/GenomeKey {1}@{2}:~/projects'.format(
                         env.key_filename, env.user, env.host))
-                    local('rsync -avP -e "ssh -i {0}" ~/projects/Cosmos {1}@{2}:~/projects'.format(
+                    local('rsync -avP -e "ssh -o StrictHostKeyChecking=no -i {0}" ~/projects/Cosmos {1}@{2}:~/projects'.format(
                         env.key_filename, env.user, env.host))
                 else:
                     # Install from github

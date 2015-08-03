@@ -1,38 +1,31 @@
-__author__ = 'erik'
+import csv
 import os
-import itertools as it
 
-from ..tools import gatk
+from cosmos import Input
+from genomekey.workflows.tools import bed
+import subprocess as sp
 
-
-# def split_target_bed_by_chrom(target_bed, output_dir):
-#     """
-#     Creates a target_bed for each chromosome.  If no targets in a chromosome exist, a bed file will not be
-#     created for that chromosome.
-#     :param str target_bed: target_bed file
-#     :param str output_dir: output_directory
-#     :return: a dictionary of chrom -> chrom_target_bed_path (
-#     """
-#     chrom_to_fh = dict()
-#
-#     with open(target_bed) as fh:
-#         for line in fh:
-#             line = line.strip()
-#             chrom = line.split("\t")[0]
-#             if chrom not in chrom_to_fh:
-#                 chrom_to_fh[chrom] = open(os.path.join(output_dir, 'chr%s_targets.bed' % chrom), 'w')
-#             print >> chrom_to_fh[chrom], line
-#
-#     for fh in chrom_to_fh.values():
-#         fh.close()
-#
-#     return {chrom: fh.name for chrom, fh in chrom_to_fh.items()}
+__author__ = 'erik'
 
 
-# def set_target_bed(tools, chrom_to_targets):
-# """
-#     Sets each tool's tags to the target_bed that corresponds to its chromosome
-#     """
-#     for t in tools:
-#         t.tags['target_bed'] = chrom_to_targets[str(t.tags['chrom'])]
-#         yield t
+def get_contigs(bed):
+    return sp.check_output("cat %s |cut -f1|uniq" % bed, shell=True).strip().split("\n")
+
+
+def split_target_beds_by_contig(ex, target_bed):
+    """Load and split up target bed by chromosome"""
+    target_bed_inp = ex.add(Input(os.path.abspath(target_bed), 'target', 'bed'), name='Load_Target_Bed')
+    target_beds = ex.add(bed.Split_Bed_By_Contig(tags=dict(contig=contig, target_bed=target_bed),
+                                                 parents=target_bed_inp,
+                                                 out='work/contigs/{contig}')
+                         for contig in get_contigs(target_bed))
+    return {tb.tags['contig']: tb for tb in target_beds}
+
+
+def parse_inputs(input_path):
+    columns = ['sample_name', 'rgid', 'chunk', 'read_pair', 'library', 'platform_unit', 'platform', 'path']
+    with open(input_path) as fh:
+        for d in csv.DictReader(fh, delimiter="\t"):
+            f = lambda p: p if p.startswith('s3://') else os.path.abspath(p)
+            yield Input(f(d.pop('path')), 'r2', 'fastq.gz', d)
+            # yield Inputs(inputs, tags=d)

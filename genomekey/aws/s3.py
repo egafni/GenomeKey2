@@ -11,19 +11,14 @@ def cp(from_, to, is_dir=False):
         return 'aws s3 cp %s %s' % (from_, to)
 
 
-def get_s3_path(bucket, taskfile):
-    def get_rel_path(taskfile):
-        """
-        Converts /execution_outs/execution_name/path/to/file to
-        execution_name/path/to/file
-        """
-        assert taskfile.path[0] != '/', 'not sure how to push/pull this from s3'
-        return taskfile.path
-
+def path_to_s3path(s3_root, taskfile):
+    """
+    gets the s3 path for a taskfile
+    """
     if taskfile.path.startswith('s3://'):
-        return taskfile
+        return taskfile.path
     else:
-        return os.path.join(bucket, get_rel_path(taskfile))
+        return os.path.join(s3_root, taskfile.path)
 
 
 def stream_in(path, md5=True):
@@ -32,20 +27,20 @@ def stream_in(path, md5=True):
     return '<({s[opt][gof3r]} get{md5} -b {bucket} -k {key})'.format(s=s, **locals())
 
 
-def get_inputs(bucket, input_taskfiles):
+def get_inputs(s3_root, input_taskfiles):
     """
-    Downloads inputs from bucket into their relative path on the filesystem
+    Downloads inputs from s3_root into their relative path on the filesystem
     """
 
     def g():
         for tf in input_taskfiles:
-            yield cp(get_s3_path(bucket, tf), tf.path, is_dir=tf.format == 'dir')
+            yield cp(path_to_s3path(s3_root, tf), tf.path, is_dir=tf.format == 'dir')
 
     return "\n".join(g())
 
 
-def push_outputs(bucket, output_taskfiles):
-    return "\n".join(cp(tf.path, get_s3_path(bucket, tf), is_dir=tf.format == 'dir') for tf in output_taskfiles)
+def push_outputs(s3_root, output_taskfiles):
+    return "\n".join(cp(tf.path, path_to_s3path(s3_root, tf), is_dir=tf.format == 'dir') for tf in output_taskfiles)
 
 
 from cosmos import Tool
@@ -57,21 +52,26 @@ class S3Tool(Tool):
     def before_cmd(self):
         if getattr(self.task.execution, 'use_s3', False):
             # TODO make sure the region in use has guaranteed consistency
-            bucket = self.task.execution.use_s3
+            s3_root = self.task.execution.use_s3
             if not self.skip_s3_pull:
-                s3_prepend = get_inputs(bucket, self.task.input_files)
+                s3_prepend = get_inputs(s3_root, self.task.input_files)
             else:
-                s3_prepend = '# Skipping s3 pull because skip_s3_pull == True'
+                s3_prepend = '# Skipping auto s3 pull because skip_s3_pull == True'
 
-            return 'TMP_DIR=`mktemp -d --tmpdir={s[gk][tmp_dir]} {self.task.execution.name}_{self.name}_XXXXXXXXX` \n' \
+            return '#!/bin/bash\n' \
+                   'set -e\n' \
+                   'set -o pipefail\n\n' \
+                   'TMP_DIR=`mktemp -d --tmpdir={s[gk][tmp_dir]} {self.task.execution.name}_{self.name}_XXXXXXXXX` \n' \
                    'echo "Created temp dir: $TMP_DIR" > /dev/stderr\n' \
                    'cd $TMP_DIR\n' \
-                   'mkdir -p {self.task.output_dir}\n' \
+                   '{make_output_dir}\n' \
                    '{s3_prepend}\n' \
-                   '\n'.format(s=s, **locals())
+                   '\n'.format(s=s,
+                               make_output_dir='mkdir -p %s\n' % self.task.output_dir if self.task.output_dir != '' else '',
+                               **locals())
 
         else:
-            return super(S3Tool, self).before_cmd(self)
+            return super(S3Tool, self).before_cmd()
 
     def after_cmd(self):
         if getattr(self.task.execution, 'use_s3', False):
@@ -82,4 +82,20 @@ class S3Tool(Tool):
                    '{s3_append}\n' \
                    'rm -rf $TMP_DIR'.format(s=s, **locals())
         else:
-            return super(S3Tool, self).after_cmd(self)
+            return super(S3Tool, self).after_cmd()
+
+
+def pull_if_s3(taskfiles, local_dir='./'):
+    """
+    Pull from s3 if the path has s3:// in it
+    """
+
+    def check_for_s3(tf):
+        if tf.path.startswith('s3://'):
+            local_fastq_path = os.path.join(local_dir, os.path.basename(tf.path))
+            return local_fastq_path, cp(tf.path, local_fastq_path) + "\n"
+        else:
+            return tf.path, ''
+
+    local_path, s3_pull_cmds = zip(*[check_for_s3(tf) for tf in taskfiles])
+    return local_path, ''.join(s3_pull_cmds)

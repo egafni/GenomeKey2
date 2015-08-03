@@ -5,11 +5,10 @@ import sys
 import subprocess
 
 from flask import Flask
-
+from functools import partial
 from cosmos import add_execution_args, Cosmos
 from genomekey.workflows.dna_seq.main import run_dna_seq
 from genomekey import settings as s, library_path
-from genomekey.aws import get_aws_env
 from genomekey.util.misc import assert_references_exist
 
 
@@ -28,11 +27,6 @@ def do_growl(msg, hostname=os.environ.get('SSH_CLIENT', '').split(' ')[0]):
     from cosmos.util import growl
 
     growl.send(msg, hostname=hostname)
-
-
-def print_aws_env():
-    for k, v in get_aws_env().items():
-        print 'export %s=%s' % (k, v)
 
 
 def text_on_finish(ex):
@@ -75,8 +69,8 @@ def parse_args():
 
     sp = sps.add_parser('runweb', help=cosmos.runweb.__doc__)
     sp.add_argument('-p', '--port', type=int, default=5000, help='port to bind the server to')
-    sp.add_argument('-H', '--host', default='localhost', help='host to bind the server to')
-    sp.set_defaults(func=cosmos.runweb)
+    # sp.add_argument('-H', '--host', default='localhost', help='host to bind the server to')
+    sp.set_defaults(func=lambda port: cosmos.runweb('0.0.0.0', port))
 
 
     def add_execution_args2(sp):
@@ -97,9 +91,6 @@ def parse_args():
                          'for a shared filesystem')
     sp.add_argument('--target_bed', '-t', required=True)  # default to whole genome target bed?
     add_execution_args2(sp)
-
-    sp = sps.add_parser('aws_env', help='echo the commands to setup AWS environment credentials')
-    sp.set_defaults(func=print_aws_env)
 
     sp = sps.add_parser('growl', help='send a message over growl')
     sp.add_argument('msg', help='message to send')
@@ -131,12 +122,23 @@ def parse_args():
         ex.info['comments'] = comments
         kwargs['execution'] = ex
 
-        ex.use_s3 = os.path.join(kwargs.pop('use_s3', False), d['name'])
-        if d['restart']:
-            ex.log.info('Deleting S3 Objects since restart==True')
-            cmd = 'aws s3 rm %s --recursive --only-show-errors' % ex.use_s3
-            ex.log.info('run: ' + cmd)
-            subprocess.check_call(cmd, shell=True)
+        ex.use_s3 = kwargs.pop('use_s3', False)
+        if ex.use_s3:
+            ex.use_s3 = os.path.join(ex.use_s3, d['name'])
+
+            if d['restart']:
+                ex.log.info('Deleting S3 Objects since restart==True')
+                from cosmos.util.helpers import confirm
+                if not d['skip_confirm']:
+                    confirm("Are you sure you want to delete %s?" % ex.use_s3)
+                cmd = 'aws s3 rm %s --recursive --only-show-errors' % ex.use_s3
+                ex.log.info('run: ' + cmd)
+                subprocess.check_call(cmd, shell=True)
+
+        # required for gof3r, which doesn't check ~/.aws/config files
+        # gof3r is used to stream input files from s3 for some tools
+        from genomekey.aws.config import set_env_aws_credentials
+        set_env_aws_credentials()
 
 
     # Send growl on fail

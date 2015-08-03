@@ -16,7 +16,7 @@ opt = lambda x: opj(data_path, 'opt', x)
 bundle = lambda x: opj(data('bundle/2.8/b37'), x)
 
 
-### Config
+### Read Config
 from configparser import ConfigParser, ExtendedInterpolation
 
 conf_path = opj(user_home, '.genomekey', 'genomekey.conf')

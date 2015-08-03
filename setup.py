@@ -40,7 +40,8 @@ setup(
         'ipdb',
         'twilio',
         'gntp',
-        'fabric'
+        'fabric',
+        'awscli'
     ],
     scripts=["bin/genomekey"],
     # Packaging Instructions
