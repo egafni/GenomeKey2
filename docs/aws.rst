@@ -10,7 +10,7 @@ Install StarCluster
     source ~/projects/GenomeKey/ve/bin/activate
     export GK_HOME=/home/egafni/projects/GenomeKey
 
-    pip install starcluster
+    pip install starcluster StarClusterExtensions
 
     starcluster help # select option to create default config in ~/.starcluster
 

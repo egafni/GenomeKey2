@@ -5,16 +5,20 @@ import sys
 import subprocess
 
 from flask import Flask
-from functools import partial
+
 from cosmos import add_execution_args, Cosmos
 from genomekey.workflows.dna_seq.main import run_dna_seq
 from genomekey import settings as s, library_path
 from genomekey.util.misc import assert_references_exist
+from cosmos.web.gemon.views import bprint as gemon_bprint
 
 
 opj = os.path.join
 
 flask_app = Flask('genomekey', template_folder=os.path.join(library_path, 'web/templates'))
+
+flask_app.secret_key = '\x16\x89\xf5-\tK`\xf5FY.\xb9\x9c\xb4qX\xfdm\x19\xbd\xdd\xef\xa9\xe2'
+flask_app.register_blueprint(gemon_bprint, url_prefix='/gemon')
 cosmos = Cosmos(s['gk']['database_url'], default_drm=s['gk']['default_drm'], flask_app=flask_app)
 
 
@@ -129,6 +133,7 @@ def parse_args():
             if d['restart']:
                 ex.log.info('Deleting S3 Objects since restart==True')
                 from cosmos.util.helpers import confirm
+
                 if not d['skip_confirm']:
                     confirm("Are you sure you want to delete %s?" % ex.use_s3)
                 cmd = 'aws s3 rm %s --recursive --only-show-errors' % ex.use_s3
@@ -138,6 +143,7 @@ def parse_args():
         # required for gof3r, which doesn't check ~/.aws/config files
         # gof3r is used to stream input files from s3 for some tools
         from genomekey.aws.config import set_env_aws_credentials
+
         set_env_aws_credentials()
 
 

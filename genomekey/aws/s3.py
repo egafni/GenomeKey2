@@ -6,9 +6,9 @@ from genomekey import settings as s
 
 def cp(from_, to, is_dir=False):
     if is_dir:
-        return 'aws s3 cp %s %s --recursive' % (from_, to)
+        return 'aws s3 cp --quiet %s %s --recursive' % (from_, to)
     else:
-        return 'aws s3 cp %s %s' % (from_, to)
+        return 'aws s3 cp --quiet %s %s' % (from_, to)
 
 
 def path_to_s3path(s3_root, taskfile):
@@ -98,4 +98,4 @@ def pull_if_s3(taskfiles, local_dir='./'):
             return tf.path, ''
 
     local_path, s3_pull_cmds = zip(*[check_for_s3(tf) for tf in taskfiles])
-    return local_path, ''.join(s3_pull_cmds)
+    return local_path, ''.join(s3_pull_cmds).strip()

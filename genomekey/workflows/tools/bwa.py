@@ -6,7 +6,7 @@ from ... import GK_Tool
 
 class BWA_MEM(GK_Tool):
     mem_req = None
-    cpu_req = 4
+    cpu_req = 16
     skip_s3_pull = True
 
     def cmd(self, rgid, sample_name, library, platform, platform_unit, reference=s['ref']['reference_fasta'],

@@ -24,6 +24,7 @@ NODE_IMAGE_ID = ami-7d0a034d  # this was created by Erik
 # note: Master is not set to execute anything
 # using c3s because they have local SSD
 MASTER_INSTANCE_TYPE = c3.xlarge # need about 31GB of local storage for genomekey/share
+# note, x3.4xlarge has 16 cores and BWA is set to request 16
 NODE_INSTANCE_TYPE = c3.4xlarge
 #MASTER_IMAGE_ID = ami-3393a45a (OPTIONAL)
 AVAILABILITY_ZONE = us-west-2a
@@ -32,7 +33,7 @@ disable_queue = True # necessary to customize sge options
 
 # note the order of plugins matters
 # genomekey needs to be before sge because reference data needs to be synced before the node can run jobs
-PLUGINS = createusers, genomekey, sge
+PLUGINS = createusers, genomekey, sge, sge_plus
 PERMISSIONS = ssh, http2, ipython_notebook, ganglia
 SPOT_BID = 0.50
 #USERDATA_SCRIPTS = /path/to/script1, /path/to/script2
@@ -106,7 +107,7 @@ TO_PORT = 8649
 
 [plugin sge]
 SETUP_CLASS = starcluster.plugins.sge.SGEPlugin
-MASTER_IS_EXEC_HOST = False
+MASTER_IS_EXEC_HOST = True # Required for sge_plus plugin to work
 
 [plugin createusers]
 SETUP_CLASS = starcluster.plugins.users.CreateUsers
@@ -117,4 +118,7 @@ DOWNLOAD_KEYS = True
 SETUP_CLASS = genomekey_deploy.starcluster.genomekey_plugin.GenomeKeySetup
 
 [plugin gluster]
-SETUP_CLASS = sce.plugins.gluster.setup.GlusterSetup
+SETUP_CLASS = sce.plugins.gluster.plugin.GlusterSetup
+
+[plugin sge_plus]
+SETUP_CLASS = sce.plugins.sge_plus.plugin.SGE_Plus_Setup

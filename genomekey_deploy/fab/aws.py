@@ -87,7 +87,8 @@ def chmod_opt(opt_path):
         bins = ['bwa/*/bwa',
                 'samtools/*/samtools',
                 'gof3r/*/gof3r',
-                'fastqc/*/fastqc']
+                'fastqc/*/fastqc',
+                'bin/run']
 
         for b in bins:
             # aws s3 cli doesn't preserve file perms :(
