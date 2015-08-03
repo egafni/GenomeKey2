@@ -16,6 +16,8 @@ Install GenomeKey
 
     pip install .
 
+    aws configure # probably want to set default region is us-west-2
+
     genomekey -h
     # Copy and edit config file as instructed
 

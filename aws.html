@@ -79,8 +79,9 @@
 <li class="toctree-l2"><a class="reference internal" href="#advanced-manually-using-fabric-deploy-script">2.3. (Advanced) Manually using Fabric Deploy Script</a></li>
 </ul>
 </li>
-<li class="toctree-l1"><a class="reference internal" href="running.html">3. Running GenomeKey</a><ul>
-<li class="toctree-l2"><a class="reference internal" href="running.html#web-interface">3.1. Web Interface</a></li>
+<li class="toctree-l1"><a class="reference internal" href="running.html">3. Running GenomeKey</a></li>
+<li class="toctree-l1"><a class="reference internal" href="running.html#test-workflows">4. Test Workflows</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="running.html#web-interface">4.1. Web Interface</a></li>
 </ul>
 </li>
 </ul>
@@ -154,7 +155,10 @@ cp <span class="nv">$GK_HOME</span>/genomekey/aws/starcluster/aws_credentials ~/
 <div class="highlight-bash"><div class="highlight"><pre>starcluster addnode gk
 </pre></div>
 </div>
-<p>Alternatively, use the elastic load balancer!</p>
+<p>Alternatively, use the elastic load balancer (not well tested)</p>
+<div class="highlight-bash"><div class="highlight"><pre>starcluster loadbalance -min_nodes <span class="m">1</span> -max_nodes <span class="m">4</span> -d -p gk
+</pre></div>
+</div>
 <p>See the <a class="reference external" href="http://star.mit.edu/cluster/docs/latest/manual/">StarCluster Docs</a> for more information</p>
 </div>
 <div class="section" id="advanced-manually-using-fabric-deploy-script">

@@ -78,8 +78,9 @@
 <li class="toctree-l2"><a class="reference internal" href="aws.html#advanced-manually-using-fabric-deploy-script">2.3. (Advanced) Manually using Fabric Deploy Script</a></li>
 </ul>
 </li>
-<li class="toctree-l1 current"><a class="current reference internal" href="">3. Running GenomeKey</a><ul>
-<li class="toctree-l2"><a class="reference internal" href="#web-interface">3.1. Web Interface</a></li>
+<li class="toctree-l1 current"><a class="current reference internal" href="">3. Running GenomeKey</a></li>
+<li class="toctree-l1"><a class="reference internal" href="#test-workflows">4. Test Workflows</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="#web-interface">4.1. Web Interface</a></li>
 </ul>
 </li>
 </ul>
@@ -125,8 +126,30 @@
 genomekey dna-seq -i input_files.tsv -t target.bed -n <span class="s1">&#39;Workflow_Name&#39;</span>
 </pre></div>
 </div>
+<p>input_files.tsv should have the following format.  If the path points to a file on s3, it will be automatically
+pulled down by the alignment tasks.</p>
+<div class="highlight-bash"><div class="highlight"><pre>sample_name     read_pair       chunk   library platform_unit   platform        rgid    path
+John_Smith      <span class="m">1</span>       <span class="m">1</span>       LB      PU      ILLUMINA        RG1     s3://genomekey-data/test/brca/brca.example.illumina.0.1.fastq.gz
+John_Smith      <span class="m">2</span>       <span class="m">1</span>       LB      PU      ILLUMINA        RG1     s3://genomekey-data/test/brca/brca.example.illumina.0.2.fastq.gz
+</pre></div>
+</div>
+</div>
+<div class="section" id="test-workflows">
+<h1>4. Test Workflows<a class="headerlink" href="#test-workflows" title="Permalink to this headline">¶</a></h1>
+<p>Here are some example datasets to test</p>
+<div class="highlight-bash"><div class="highlight"><pre><span class="c"># A single gene, runs in a few minutes</span>
+<span class="nb">cd</span> /mnt/genomekey/share/test/brca
+genomekey -d dna_seq -n <span class="s1">&#39;Test_BRCA&#39;</span> -t targets.bed input_s3.tsv -ry <span class="c">#--use_s3 s3://genomekey-out</span>
+
+<span class="c"># A gene panel</span>
+<span class="nb">cd</span> /mnt/genomekey/share/test/1000g
+genomekey -d dna_seq -n <span class="s1">&#39;Test_Exon&#39;</span> -t P3_consensus_exonic_targets.bed exons.tsv -ry <span class="c">#--use_s3 s3://genomekey-out</span>
+
+<span class="c"># Two Exomes</span>
+</pre></div>
+</div>
 <div class="section" id="web-interface">
-<h2>3.1. Web Interface<a class="headerlink" href="#web-interface" title="Permalink to this headline">¶</a></h2>
+<h2>4.1. Web Interface<a class="headerlink" href="#web-interface" title="Permalink to this headline">¶</a></h2>
 <div class="highlight-bash"><div class="highlight"><pre>genomekey runweb -H 0.0.0.0
 </pre></div>
 </div>
