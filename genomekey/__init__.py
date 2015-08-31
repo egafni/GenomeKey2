@@ -18,5 +18,3 @@ user_home = os.path.expanduser(os.environ['HOME'])
 
 with open(os.path.join(library_path, 'VERSION'), 'r') as fh:
     __version__ = fh.read().strip()
-
-from .aws.s3 import S3Tool as GK_Tool

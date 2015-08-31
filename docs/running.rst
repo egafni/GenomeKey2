@@ -6,7 +6,7 @@ Running GenomeKey
 .. code-block:: bash
 
     source ~/projects/GenomeKey/ve/bin/activate
-    genomekey dna-seq -i input_files.tsv -t target.bed -n 'Workflow_Name'
+    genomekey germline -i input_files.tsv -t target.bed -n 'Workflow_Name'
 
 
 input_files.tsv should have the following format.  If the path points to a file on s3, it will be automatically
@@ -20,7 +20,7 @@ pulled down by the alignment tasks.
 
 
 Test Workflows
-================
++++++++++++++++
 
 Here are some example datasets to test
 

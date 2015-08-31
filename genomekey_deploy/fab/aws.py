@@ -46,7 +46,7 @@ def init_node():
 @task
 def init_master():
     with hide('output'):
-        # update apt-list, starcluster AMI is out-of-date
+        # update apt-list, starcluster AMI is out_dir-of-date
         run('apt-get install graphviz graphviz-dev mbuffer -y')
         run('pip install awscli')
 

@@ -27,5 +27,4 @@ def parse_inputs(input_path):
     with open(input_path) as fh:
         for d in csv.DictReader(fh, delimiter="\t"):
             f = lambda p: p if p.startswith('s3://') else os.path.abspath(p)
-            yield Input(f(d.pop('path')), 'r2', 'fastq.gz', d)
-            # yield Inputs(inputs, tags=d)
+            yield d.pop('path'), d

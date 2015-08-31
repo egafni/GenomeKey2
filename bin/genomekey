@@ -7,7 +7,7 @@ import subprocess
 from flask import Flask
 
 from cosmos import add_execution_args, Cosmos
-from genomekey.workflows.dna_seq.main import run_dna_seq
+from genomekey.workflows.germline.main import run_germline
 from genomekey import settings as s, library_path
 from genomekey.util.misc import assert_references_exist
 from cosmos.web.gemon.views import bprint as gemon_bprint
@@ -87,8 +87,8 @@ def parse_args():
                         action='store_true')
 
 
-    sp = sps.add_parser('dna_seq', help=run_dna_seq.__doc__)
-    sp.set_defaults(func=run_dna_seq)
+    sp = sps.add_parser('germline', help=run_germline.__doc__)
+    sp.set_defaults(func=run_germline)
     sp.add_argument('input_path', help='file with inputs')
     sp.add_argument('--use_s3', '-s3', default=False,
                     help='upload/download all output files to this s3 bucket.  Removes the need'
@@ -105,7 +105,7 @@ def parse_args():
     kwargs = dict(args._get_kwargs())
     f = kwargs.pop('func')
 
-    workflow_fxns = dict(run_dna_seq='DNA-Seq')
+    workflow_fxns = dict(run_germline='Germline')
 
     if f.__name__ in workflow_fxns.keys():
         assert_references_exist()

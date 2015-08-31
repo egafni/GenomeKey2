@@ -23,11 +23,12 @@ class GenomeKeySetup(ClusterSetup):
     """
     def run(self, nodes, master, user, user_shell, volumes):
         for node in nodes:
+            # fab -f init_node -H $hosts
             run_fab(init_node, hosts=node)
 
         run_fab(init_master, hosts=master)
 
-        # Print out IP address for the user
+        # Print out_dir IP address for the user
         cluster_name = master.parent_cluster.name[4:]
         etc_hosts_line = "{0}\t{1}".format(master.ip_address, cluster_name)
         log.info('Consider adding to /etc/hosts: %s' % etc_hosts_line)
