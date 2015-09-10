@@ -7,10 +7,10 @@ def list_to_input(l):
 
 def picard(time_req=12 * 60, mem_req=3 * 1024, extra_java_args=''):
     return 'java{extra_java_args} ' \
-           '-Xmx{mem_req}m -Djava.io.tmpdir={s[gk][tmp_dir]} ' \
+           '-Xmx{mem_req2}m -Djava.io.tmpdir={s[gk][tmp_dir]} ' \
            '-Dsnappy.loader.verbosity=true ' \
            '-jar {s[opt][picard]}'.format(s=s,
-                                          mem_req=int(mem_req * .8),
+                                          mem_req2=int(mem_req * .8),
                                           **locals())
 
 

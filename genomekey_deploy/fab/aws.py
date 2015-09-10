@@ -40,7 +40,8 @@ def init_node():
             setup_aws_cli()
             # mount_genomekey_share()
             # if sync_genomekey_share:
-            sync_genomekey_share()
+
+        sync_genomekey_share()
 
 
 @task
@@ -73,10 +74,16 @@ def init_master():
 
 @task
 def sync_genomekey_share(user='genomekey'):
+    with settings(user='root'):
+        # TODO change the AMI and delete this?  This runs instantly so not a big deal
+        run('chown -R genomekey:genomekey /genomekey')
     with settings(user=user):
         with hide('output'):
             setup_aws_cli()
-            run('mkdir -p /mnt/genomekey/share')
+            if files.exists('/genomekey/share'):
+                run('ln -s /genomekey/share /mnt/genomekey/share')
+            else:
+                run('mkdir -p /mnt/genomekey/share')
             run('aws s3 sync s3://genomekey-data /mnt/genomekey/share')
             chmod_opt('/mnt/genomekey/share/opt')
 

@@ -7,20 +7,19 @@ from genomekey.aws import s3
 
 #skip_s3_pull
 def fastqc(cpu_req=2,
-           reads=find('fastq', n='>=2'),
+           in_r1s=find('fastq', n='>=1', tags=dict(read_pair='1')),
+           in_r2s=find('fastq', n='>=1', tags=dict(read_pair='2')),
            out_dir=out_dir('fastqc'),
            fastqc_tmp_dir=out_dir('tmp')):
 
-    r1s = filter(lambda tf: tf.task_output_for.tags['read_pair'] in [1, '1'], reads)
-    r2s = filter(lambda tf: tf.task_output_for.tags['read_pair'] in [2, '2'], reads)
-    assert len(r1s) == len(r2s)
+    assert len(in_r1s) == len(in_r2s)
 
 
     # if fastq files are in s3, download them
-    r1s, s3_pulls_1 = s3.pull_if_s3(r1s, fastqc_tmp_dir)
-    r2s, s3_pulls_2 = s3.pull_if_s3(r2s, fastqc_tmp_dir)
+    in_r1s, s3_pulls_1 = s3.pull_if_s3(in_r1s, fastqc_tmp_dir)
+    in_r2s, s3_pulls_2 = s3.pull_if_s3(in_r2s, fastqc_tmp_dir)
 
-    if len(r1s) > 1:
+    if len(in_r1s) > 1:
         # If there are more than 1 fastqs per read_pair, merge them into one file per read_pair
         # Note, catting compressed files together seems fine
         # Have to cat because fastqc does not support streaming
@@ -29,11 +28,11 @@ def fastqc(cpu_req=2,
             cat {r1s_join} > {r1}
             cat {r2s_join} > {r2}
             """.format(s=s,
-                       r1s_join=' '.join(map(str, r1s)),
-                       r2s_join=' '.join(map(str, r2s)),
+                       r1s_join=' '.join(map(str, in_r1s)),
+                       r2s_join=' '.join(map(str, in_r2s)),
                        **locals())
     else:
-        r1, r2 = r1s[0], r2s[0]
+        r1, r2 = in_r1s[0], in_r2s[0]
         cat = ""
 
     return r"""

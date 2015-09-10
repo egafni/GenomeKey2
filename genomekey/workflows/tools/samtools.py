@@ -1,9 +1,9 @@
-from cosmos import find, out_dir
+from cosmos.api import find, out_dir
 from ... import settings as s
 
 
 def merge(in_bams=find('bam$', n='>0'),
-        out_bam=out_dir('merged.bam')):
+          out_bam=out_dir('merged.bam')):
     if len(in_bams) == 1:
         # Can't merge 1 bam, just copy it
         return r"""

@@ -56,7 +56,7 @@ def s3_cmd_fxn_wrapper(bucket):
         prepend = '#!/bin/bash\n' \
                   'set -e\n' \
                   'set -o pipefail\n\n' \
-                  'TMP_DIR=`mktemp -d --tmpdir={s[gk][tmp_dir]} {self.task.execution.name}_{self.name}_XXXXXXXXX` \n' \
+                  'TMP_DIR=`mktemp -d --tmpdir={s[gk][tmp_dir]} {fxn.__name__}_XXXXXXXXX` \n' \
                   'echo "Created temp dir: $TMP_DIR" > /dev/stderr\n' \
                   'cd $TMP_DIR\n' \
                   '{make_output_dir}\n' \
@@ -80,12 +80,12 @@ def pull_if_s3(file_paths, local_dir='./'):
     Pull from s3 if the path has s3:// in it
     """
 
-    def check_for_s3(tf):
-        if tf.path.startswith('s3://'):
-            local_fastq_path = os.path.join(local_dir, os.path.basename(tf.path))
-            return local_fastq_path, cp(tf.path, local_fastq_path) + "\n"
+    def check_for_s3(file_path):
+        if file_path.startswith('s3://'):
+            local_fastq_path = os.path.join(local_dir, os.path.basename(file_path))
+            return local_fastq_path, cp(file_path, local_fastq_path) + "\n"
         else:
-            return tf.path, ''
+            return file_path, ''
 
     local_path, s3_pull_cmds = zip(*[check_for_s3(tf) for tf in file_paths])
     return local_path, ''.join(s3_pull_cmds).strip()

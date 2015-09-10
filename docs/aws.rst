@@ -73,7 +73,8 @@ steps.
 
 A custom StarCluster AMI was created to speed up deployment.
 
-  * Installed oracle Java
+  * apt-update
+  * Install oracle Java
   * Increase EBS root volume size (Must be done by first using "starcluster ebsimage", then in console, create a second image and specify root ebs size).
-  * Downloaded GATK bundle to root ebs drive
-  * Create the final ebs image
+  * Download GATK bundle to root ebs drive
+  * Create the final ebs image ("starcluster ebsimage")
