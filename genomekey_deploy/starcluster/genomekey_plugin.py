@@ -3,6 +3,8 @@ from starcluster.logger import log
 from fabric.api import execute, env
 
 from ..fab.aws import init_node, init_master
+from ..fab.gk import copy_genomekey_dev_environ
+from genomekey_deploy.util import tobool
 
 
 def run_fab(func, hosts, *args, **kwargs):
@@ -12,7 +14,7 @@ def run_fab(func, hosts, *args, **kwargs):
     if not isinstance(hosts, list):
         hosts = [hosts]
 
-    env.key_filename = hosts[0].key_location  # Assume all hosts use the same key...
+    env.key_filename = [hosts[0].key_location]  # Assume all hosts use the same key...
     log.info('Run fab task: %s, args: %s, kwargs: %s' % (func.__name__, args, kwargs))
     execute(func, hosts=[h.ip_address for h in hosts], *args, **kwargs)
 
@@ -21,6 +23,13 @@ class GenomeKeySetup(ClusterSetup):
     """
     Interface for StarCluster to use the genomekey_deploy fab files.  There should be very minimal logic here.
     """
+
+    def __init__(self, install_dev_environ=False,
+                 **kwargs):
+        self.install_dev_environ = tobool(install_dev_environ)
+        super(ClusterSetup, self).__init__(**kwargs)
+
+
     def run(self, nodes, master, user, user_shell, volumes):
         for node in nodes:
             # fab -f init_node -H $hosts
@@ -28,11 +37,13 @@ class GenomeKeySetup(ClusterSetup):
 
         run_fab(init_master, hosts=master)
 
+        if self.install_dev_environ:
+            run_fab(copy_genomekey_dev_environ, hosts=master)
+
         # Print out_dir IP address for the user
         cluster_name = master.parent_cluster.name[4:]
         etc_hosts_line = "{0}\t{1}".format(master.ip_address, cluster_name)
         log.info('Consider adding to /etc/hosts: %s' % etc_hosts_line)
-
 
 
     def on_add_node(self, node, nodes, master, user, user_shell, volumes):

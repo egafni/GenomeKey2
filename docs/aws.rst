@@ -29,11 +29,11 @@ Install StarCluster
 Launch Cluster
 +++++++++++++++++++
 
-This will launch a single master node.
+This will launch a single master node (reserved instance), and one execution node (spot instance)
 
 .. code-block:: bash
 
-    starcluster start gk
+    starcluster start gk -s 2
 
 Adding nodes (StarCluster has been configured to request spot instances by default)
 

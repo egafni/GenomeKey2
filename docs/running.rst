@@ -28,11 +28,14 @@ Here are some example datasets to test
 
     # A single gene, runs in a few minutes
     cd /mnt/genomekey/share/test/brca
-    genomekey -d dna_seq -n 'Test_BRCA' -t targets.bed input_s3.tsv -ry #--use_s3 s3://genomekey-out
+    ~/bin/genomekey -d germline -n 'BRCA' input_s3.tsv --target_bed targets.bed -ry
+
+    # A single gene, using s3 as the file system
+    ~/bin/genomekey -d germline -n 'BRCA_s3fs' /genomekey/share/test/brca/input_s3.tsv --target_bed /genomekey/share/test/brca/targets.bed --use_s3_bucket s3://genomekey-out -ry
 
     # A gene panel
     cd /mnt/genomekey/share/test/1000g
-    genomekey -d dna_seq -n 'Test_Exon' -t P3_consensus_exonic_targets.bed exons.tsv -ry #--use_s3 s3://genomekey-out
+    genomekey germline -n 'Test_Exon' -t P3_consensus_exonic_targets.bed exons.tsv -ry #--use_s3 s3://genomekey-out
 
     # Two Exomes
 

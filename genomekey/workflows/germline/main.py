@@ -1,12 +1,13 @@
 from .util import parse_inputs
+from ...aws import s3
 
 from ..tools import bwa, picard, gatk, samtools, fastqc, bed
 from . import util
 
 from cosmos.api import one2one, many2one, out_dir, group, load_input
+import os
 
-
-def run_germline(execution, target_bed, input_path=None):
+def run_germline(execution, target_bed, input_path=None, use_s3_bucket=None):
     """
     Executes the germline variant calling pipeline
 
@@ -15,7 +16,11 @@ def run_germline(execution, target_bed, input_path=None):
     :param input_path: The path to the input_file tsv of fastq files
     """
     #: chrom -> target_bed_path
-    target_bed_tasks = [execution.add_task(bed.spit_bed_by_contig, tags=dict(contig=contig, in_bed=target_bed), out_dir='work/contigs/{contig}')
+    # target_bed = os.path.abspath(target_bed)
+    # input_path = os.path.abspath(input_path)
+
+
+    target_bed_tasks = [execution.add_task(bed.spit_bed_by_contig, tags=dict(contig=contig, in_bed=target_bed, skip_s3_pull=True), out_dir='work/contigs/{contig}')
                         for contig in util.get_contigs(target_bed)]
 
     fastq_tasks = [execution.add_task(load_input, dict(in_file=fastq_path, **tags)) for fastq_path, tags in parse_inputs(input_path)]
@@ -25,7 +30,7 @@ def run_germline(execution, target_bed, input_path=None):
     aligned_tasks = align(execution, fastq_tasks, target_bed_tasks)
     called_tasks = variant_call(execution, aligned_tasks, target_bed_tasks)
 
-    execution.run()
+    execution.run(cmd_wrapper=s3.make_wrapper(use_s3_bucket))
     execution.log.info('Final vcf: %s' % called_tasks[0].output_files[0])
 
 

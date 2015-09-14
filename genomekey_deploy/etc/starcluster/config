@@ -121,6 +121,7 @@ DOWNLOAD_KEYS = True
 
 [plugin genomekey]
 SETUP_CLASS = genomekey_deploy.starcluster.genomekey_plugin.GenomeKeySetup
+install_dev_environ = True
 
 [plugin gluster]
 SETUP_CLASS = sce.plugins.gluster.plugin.GlusterSetup

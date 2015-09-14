@@ -3,7 +3,7 @@ from fabric.contrib import files
 from fabric.operations import run
 from fabric.api import cd, task
 
-from genomekey_deploy.fab.gk import install_genomekey
+from genomekey_deploy.fab.gk import copy_genomekey_dev_environ
 from genomekey_deploy.util import apt_update
 
 # from genomekey_deploy.session import aws_credentials
@@ -54,10 +54,12 @@ def init_master():
         with settings(user='genomekey'):
             run('mkdir -p /home/genomekey/analysis')
 
-        install_genomekey()
-
         # For ipython notebook.  Do this last user can get started.  Installing pandas is slow.
         run('pip install "ipython[notebook]" -I')
+
+        with settings(user='genomekey'):
+            files.append('~/.bashrc', ['export SGE_ROOT=/opt/sge6',
+                                       'export PATH=$PATH:/opt/sge6/bin/linux-x64:$HOME/bin', ])
 
 
 # @task
@@ -110,5 +112,4 @@ def setup_aws_cli(user='genomekey', overwrite=False):
 
             # push aws config files
             files.upload_template('config', '~/.aws/config', use_jinja=False, template_dir='~/.aws')
-
             files.upload_template('credentials', '~/.aws/credentials', use_jinja=False, template_dir='~/.aws')

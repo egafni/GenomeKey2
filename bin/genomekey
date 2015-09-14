@@ -10,6 +10,7 @@ from cosmos import add_execution_args, Cosmos
 from genomekey.workflows.germline.main import run_germline
 from genomekey import settings as s, library_path
 from genomekey.util.misc import assert_references_exist
+from genomekey.aws import s3
 from cosmos.web.gemon.views import bprint as gemon_bprint
 
 
@@ -90,7 +91,7 @@ def parse_args():
     sp = sps.add_parser('germline', help=run_germline.__doc__)
     sp.set_defaults(func=run_germline)
     sp.add_argument('input_path', help='file with inputs')
-    sp.add_argument('--use_s3', '-s3', default=False,
+    sp.add_argument('--use_s3_bucket', '-s3', default=False,
                     help='upload/download all output files to this s3 bucket.  Removes the need'
                          'for a shared filesystem')
     sp.add_argument('--target_bed', '-t', required=True)  # default to whole genome target bed?
@@ -126,19 +127,21 @@ def parse_args():
         ex.info['comments'] = comments
         kwargs['execution'] = ex
 
-        ex.use_s3 = kwargs.pop('use_s3', False)
-        if ex.use_s3:
-            ex.use_s3 = os.path.join(ex.use_s3, d['name'])
+        use_s3_bucket = kwargs.get('use_s3_bucket', None)
+        if use_s3_bucket:
+            use_s3_bucket = os.path.join(use_s3_bucket, d['name'])
+            ex.info['use_s3_bucket'] = use_s3_bucket
 
+            dir_exists = os.system('aws s3 ls %s' % use_s3_bucket) == 0
             if d['restart']:
-                ex.log.info('Deleting S3 Objects since restart==True')
-                from cosmos.util.helpers import confirm
+                if dir_exists:
+                    ex.log.info('Deleting S3 Objects in %s since restart==True' % use_s3_bucket)
+                    s3.delete_s3_dir(use_s3_bucket, skip_confirm=d['skip_confirm'])
+            else:
+                if dir_exists:
+                    ex.delete()
+                    raise AssertionError('%s is not in the database, but %s already exists!' % (ex.name, use_s3_bucket))
 
-                if not d['skip_confirm']:
-                    confirm("Are you sure you want to delete %s?" % ex.use_s3)
-                cmd = 'aws s3 rm %s --recursive --only-show-errors' % ex.use_s3
-                ex.log.info('run: ' + cmd)
-                subprocess.check_call(cmd, shell=True)
 
         # required for gof3r, which doesn't check ~/.aws/config files
         # gof3r is used to stream input files from s3 for some tools
@@ -171,19 +174,13 @@ def parse_args():
         import ipdb
 
         with ipdb.launch_ipdb_on_exception():
-            try:
-                f(**kwargs)
-            except TypeError:
-                import inspect
-
-                args_needed = inspect.getargspec(f).args
-                raise
+            f(**kwargs)
     else:
         f(**kwargs)
 
     if 'execution' in kwargs:
-        if ex.use_s3 and ex.successful:
-            ex.log.info('Data output to: %s' % ex.use_s3)
+        if use_s3_bucket and ex.successful:
+            ex.log.info('Data output to: %s' % use_s3_bucket)
 
         exit_code = 0 if kwargs['execution'].successful else 1
         sys.exit(exit_code)
