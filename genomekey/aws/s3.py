@@ -1,20 +1,29 @@
 import re
 import os
 import decorator
-from genomekey import settings as s
+import sys
+from genomekey.api import settings as s
 import random
+import subprocess as sp
 from cosmos.util.helpers import random_str
+from functools import partial
 import string
+import sys
+opj = os.path.join
 
+def dir_exists(path):
+    return sp.Popen('aws s3 ls %s' % path, shell=True, stdout=sp.PIPE).wait() == 0
 
-def cp(from_, to, recursive=False, quiet=False):
+def cp(from_, to, recursive=False, quiet=False,only_show_errors=True):
+    #todo try switching to gof3r, may be much faster
     # if is_dir:
     if to.endswith('/') or from_.endswith('/'):
-        recursive=True
-    return 'aws s3 cp{quiet}{recursive} {from_} {to}'.format(
+        recursive = True
+    return 'aws s3 cp{quiet}{only_show_errors}{recursive} {from_} {to}'.format(
         from_=from_,
         to=to,
         quiet=' --quiet' if quiet else '',
+        only_show_errors=' --only-show-errors' if only_show_errors else '',
         recursive=' --recursive' if recursive else ''
     )
     # else:
@@ -28,16 +37,16 @@ def cp(from_, to, recursive=False, quiet=False):
 # if file_path.startswith('s3://'):
 # return file_path
 # else:
-#         return os.path.join(s3_root, file_path)
+# return opj(s3_root, file_path)
 
 def split_bucket_key(s3_path):
     bucket, key = re.search('s3://(.+?)/(.+)', s3_path).groups()
     return bucket, key
 
 
-def stream_in(path, md5=True):
+def stream_in(path, md5=False):
     bucket, key = split_bucket_key(path)
-    md5 = ' ' if md5 else ' --no-md5'
+    md5 = '' if md5 else ' --no-md5'
     return '<({s[opt][gof3r]} get{md5} -b {bucket} -k {key})'.format(s=s, **locals())
 
 
@@ -50,43 +59,46 @@ def stream_in(path, md5=True):
 #
 #     def g():
 #         for path in input_file_paths:
-#             yield cp(os.path.join(s3_root, path), path)
+#             yield cp(opj(s3_root, path), path)
 #
 #     return "\n".join(g())
 #
 #
 # def push_outputs(s3_root, output_file_paths):
-#     return "\n".join(cp(path, os.path.join(s3_root, path)) for path in output_file_paths)
+#     return "\n".join(cp(path, opj(s3_root, path)) for path in output_file_paths)
 
 
 from cosmos.api import NOOP
 
 
 def can_stream(input_param_names):
-    s3_streamables = input_param_names if isinstance(input_param_names, list) else [input_param_names]
+    if not isinstance(input_param_names, list) and not isinstance(input_param_names, tuple):
+        input_param_names = [input_param_names]
 
-    def wrapper(fxn, *args, **kwargs):
-        # fxn.s3_streamables = s3_streamables
-        return fxn(*args, **kwargs)
+    def wrapper(fxn):
+        fxn.s3_stream_params = input_param_names
+        return fxn
 
-    wrapper.s3_streamables = s3_streamables
-    return decorator.decorator(wrapper)
+    return wrapper
 
 
-def skip_pull(input_param_names):
-    def wrapper(fxn, *args, **kwargs):
-        fxn.skip_pulls = input_param_names if isinstance(input_param_names, list) else [input_param_names]
-        return fxn(*args, **kwargs)
-
-    return decorator.decorator(wrapper)
+# def skip_pull(input_param_names):
+#     if not isinstance(input_param_names, list) and not isinstance(input_param_names, tuple):
+#         input_param_names = [input_param_names]
+#
+#     def wrapper(fxn):
+#         fxn.skip_pulls = input_param_names
+#         return fxn
+#
+#     return wrapper
 
 
 from cosmos.core.cmd_fxn.signature import default_cmd_fxn_wrapper
 import funcsigs
 
 
-def make_wrapper(bucket):
-    def s3_cmd_fxn_wrapper(task, input_map, output_map):
+def make_s3_cmd_fxn_wrapper(s3_path):
+    def s3_cmd_fxn_wrapper(task, stage_name, input_map, output_map):
         """
         Create and cd into a tmp dir
         Create the task's output_dir
@@ -98,11 +110,9 @@ def make_wrapper(bucket):
 
         def wrapped(fxn, *args, **kwargs):
             """
-            1) If input starts with s3:// or bucket is set, pull or stream
-            3) If bucket is set, push outputs to S3
+            1) If input starts with s3:// or s3_path is set, pull or stream
+            3) If s3_path is set, push outputs to S3
             """
-
-            s3_streamables = getattr(fxn, 's3_streammables', [])
 
             # for some reason decorator is using args instead of kwargs..
             # repopulate kwargs manually
@@ -110,66 +120,75 @@ def make_wrapper(bucket):
                 kwargs[k] = args[i]
 
             def process_input_map():
-                def process_input_value(input_value):
+                # TODO this function should probably be refactored for readability
+                def process_input_value(input_param_name, file_path):
                     """
                     :returns: s3_copy_command, new_input_value
                     """
-                    if input_value in s3_streamables:
-                        return None, stream_in(input_value)
-                    else:
-                        if input_value.startswith('s3://'):
-                            basename = 'tmp-%s__%s' % (random_str(6), os.path.basename(input_value))
-                            return cp(input_value, basename), basename
+                    if input_param_name in getattr(fxn, 's3_stream_params', []):
+                        # do not pull, change value to stream in
+                        if file_path.startswith('s3://'):
+                            return None, stream_in(file_path)
                         else:
-                            return cp(os.path.join(bucket, input_value), input_value), input_value
+                            return None, stream_in(opj(s3_path, file_path))
+                    else:
+                        if file_path.startswith('s3://'):
+                            # pull to cwd as a temp file (it'll get deleted when $TMP_DIR is deleted)
+                            basename = 'tmp-%s__%s' % (random_str(6), os.path.basename(file_path))
+                            return cp(file_path, basename), basename
+                        else:
+                            # pull into relative path
+                            return cp(opj(s3_path, file_path), file_path), file_path
 
                 s3_pull_all_inputs = []
 
-                if not task.tags.get('skip_s3_pull', False):
-                    for input_name, input_value in input_map.items():
-                        if isinstance(input_value, list):
-                            cp_strs, new_input_value = zip(*map(process_input_value, input_value))
-                            s3_pull_all_inputs += cp_strs
-                            kwargs[input_name] = new_input_value
-                        else:
-                            cp_str, new_input_value = process_input_value(input_value)
-                            s3_pull_all_inputs.append(cp_str)
-                            kwargs[input_name] = new_input_value
+                for input_name, input_value in input_map.items():
+                    if isinstance(input_value, list):
+                        cp_strs, new_input_value = zip(*map(partial(process_input_value, input_name), input_value))
+                        s3_pull_all_inputs += cp_strs
+                        kwargs[input_name] = new_input_value
+                    else:
+                        cp_str, new_input_value = process_input_value(input_name, input_value)
+                        s3_pull_all_inputs.append(cp_str)
+                        kwargs[input_name] = new_input_value
 
-                return "\n".join(s3_pull_all_inputs)
+                return "\n".join(filter(bool, s3_pull_all_inputs)) # remove the Nones for stream_in
 
-            s3_pull_all_inputs_cmd = process_input_map()
+            s3_pull_all_inputs_cmd = process_input_map() if not task.tags.get('skip_s3_pull', False) else ''
 
             prepend = '#!/bin/bash\n' \
                       'set -e\n' \
                       'set -o pipefail\n\n' \
-                      'TMP_DIR=`mktemp -d --tmpdir={s[gk][tmp_dir]} {fxn.__name__}_XXXXXXXXX` \n' \
+                      'TMP_DIR=`mktemp -d --tmpdir={s[gk][tmp_dir]} {stage_name}_XXXXXXXXX` \n' \
                       'echo "Created temp dir: $TMP_DIR" > /dev/stderr\n' \
                       'cd $TMP_DIR\n' \
-                      '{make_output_dir}\n' \
+                      '{make_output_dir}\n\n' \
+                      '# S3: Pull inputs\n' \
                       '{s3_pull_all_inputs}\n' \
                       '\n'.format(s=s,
-                                  fxn=fxn,
+                                  stage_name=stage_name,
                                   s3_pull_all_inputs=s3_pull_all_inputs_cmd,
                                   make_output_dir='mkdir -p %s\n' % task.output_dir if task.output_dir and task.output_dir != '' else '',
             )
 
             def gen_pushes():
-                if bucket:
+                if s3_path:
                     for output_vals in output_map.values():
                         if not isinstance(output_vals, list):
                             output_vals = [output_vals]
                         for out in output_vals:
-                            yield cp(out, os.path.join(bucket, out))
+                            yield cp(out, opj(s3_path, out))
 
             append = '\n\n' \
+                     '#S3: Push Outputs\n' \
                      '{s3_push_all_outputs}\n' \
                      'rm -rf $TMP_DIR'.format(s=s,
                                               s3_push_all_outputs="\n".join(gen_pushes()))
-            # if 'fastqc' in fxn.__name__:
-            #     raise
 
             r = fxn(**kwargs)
+            # print prepend, r, append
+            # if 'bwa' in fxn.__name__:
+            #     raise
 
             if r == NOOP:
                 return NOOP
@@ -189,7 +208,7 @@ def make_wrapper(bucket):
 #
 #     def check_for_s3(file_path):
 #         if file_path.startswith('s3://'):
-#             local_path = os.path.join(local_dir, os.path.basename(file_path))
+#             local_path = opj(local_dir, os.path.basename(file_path))
 #             return local_path, cp(file_path, local_path) + "\n"
 #         else:
 #             return file_path, ''
@@ -207,4 +226,5 @@ def delete_s3_dir(s3_path, skip_confirm=False):
     if not skip_confirm:
         confirm("Are you sure you want to delete %s?" % s3_path)
     cmd = 'aws s3 rm %s --recursive --only-show-errors' % s3_path
+    print >> sys.stderr, cmd
     subprocess.check_call(cmd, shell=True)

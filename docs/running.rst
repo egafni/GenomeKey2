@@ -30,20 +30,24 @@ Here are some example datasets to test
     cd /mnt/genomekey/share/test/brca
     ~/bin/genomekey -d germline -n 'BRCA' input_s3.tsv --target_bed targets.bed -ry
 
-    # A single gene, using s3 as the file system
+    # A single gene, using s3 asthe file system
     ~/bin/genomekey -d germline -n 'BRCA_s3fs' /genomekey/share/test/brca/input_s3.tsv --target_bed /genomekey/share/test/brca/targets.bed --use_s3_bucket s3://genomekey-out -ry
 
     # A gene panel
     cd /mnt/genomekey/share/test/1000g
-    genomekey germline -n 'Test_Exon' -t P3_consensus_exonic_targets.bed exons.tsv -ry #--use_s3 s3://genomekey-out
+    genomekey germline -n 'Test_Exon_s3fs' /genomekey/share/test/1000g/exons.tsv  -t /genomekey/share/test/1000g/P3_consensus_exonic_targets.bed --use_s3 s3://genomekey-out -ry
 
     # Two Exomes
 
 
 
-Web Interface
+Web Dashboard
 +++++++++++++++
 
 .. code-block:: bash
 
+    # Development flask server (not secure)
     genomekey runweb -H 0.0.0.0
+
+    # More robust gunicorn web server
+    gunicorn genomekey.web.gunicorn:flask -b 0.0.0.0:5000

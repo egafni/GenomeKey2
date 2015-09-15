@@ -1,4 +1,4 @@
-# from genomekey import settings as s
+# from genomekey.api import settings as s
 #
 #
 # def get_aws_env():

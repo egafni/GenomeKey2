@@ -1,5 +1,5 @@
 from cosmos.api import find, out_dir
-from ... import settings as s
+from ...api import settings as s
 
 
 def merge(in_bams=find('bam$', n='>0'),

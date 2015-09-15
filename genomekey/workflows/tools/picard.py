@@ -1,5 +1,5 @@
 from cosmos.api import find, out_dir
-from ... import settings as s
+from ...api import settings as s
 
 def list_to_input(l):
     return " ".join('INPUT=%s' % x for x in l)

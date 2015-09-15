@@ -1,5 +1,5 @@
 from cosmos.api import find, out_dir, forward
-from genomekey import settings as s
+from genomekey.api import settings as s
 
 bam_list_to_inputs = lambda l: " -I ".join(map(str, l))
 vcf_list_to_input = lambda l: " -V ".join(map(str, l))

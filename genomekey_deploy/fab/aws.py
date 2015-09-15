@@ -78,7 +78,8 @@ def init_master():
 def sync_genomekey_share(user='genomekey'):
     with settings(user='root'):
         # TODO change the AMI and delete this?  This runs instantly so not a big deal
-        run('chown -R genomekey:genomekey /genomekey')
+        # run('chown -R genomekey:genomekey /genomekey')
+        pass
     with settings(user=user):
         with hide('output'):
             setup_aws_cli()

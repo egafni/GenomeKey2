@@ -8,7 +8,7 @@ def read_config():
 
 def get_aws_env():
     sc_config = read_config()
-    from .... import settings as s
+    from ....api import settings as s
 
     return dict(
         AWS_ACCESS_KEY_ID=sc_config.aws.aws_access_key_id,

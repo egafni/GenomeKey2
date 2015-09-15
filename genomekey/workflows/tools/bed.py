@@ -1,5 +1,5 @@
 from cosmos.api import find, out_dir
-from genomekey import settings as s
+from genomekey.api import settings as s
 
 
 def spit_bed_by_contig(contig,

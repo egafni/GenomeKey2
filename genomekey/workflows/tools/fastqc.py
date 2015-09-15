@@ -1,7 +1,7 @@
 import os
 
 from cosmos.api import find, out_dir
-from ... import settings as s
+from ...api import settings as s
 from genomekey.aws import s3
 from cosmos.util.helpers import random_str
 
@@ -17,7 +17,8 @@ def fastqc(cpu_req=2,
         # If there are more than 1 fastqs per read_pair, merge them into one file per read_pair
         # Note, catting compressed files together seems fine
         # Have to cat because fastqc does not support streaming
-        # Todo make sure we are concating to local temp disc if available.  For the usual S3 option this is fine.
+        # TODO make sure we are concating to local temp disc if available.  For the usual S3 option this is fine, since we're already in a tmp dir
+        # TODO stream from s3 into a cat command when input files start with s3://
         r1, r2 = os.path.join('cat_r1.fastq.gz'), os.path.join('cat_r2.fastq.gz')
         cat = r"""
             cat {r1s_join} > {r1}

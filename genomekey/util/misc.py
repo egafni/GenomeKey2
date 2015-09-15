@@ -1,4 +1,4 @@
-from .. import settings as s
+from ..api import settings as s
 import os
 
 def assert_references_exist():

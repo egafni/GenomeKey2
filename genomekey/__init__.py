@@ -9,7 +9,6 @@ ch.setFormatter(logging.Formatter('GenomeKey.%(levelname)s: %(asctime)s: %(messa
 log.addHandler(ch)
 log.propagate = False
 
-from configuration import settings
 import os
 
 library_path = os.path.dirname(os.path.realpath(__file__))
@@ -18,3 +17,5 @@ user_home = os.path.expanduser(os.environ['HOME'])
 
 with open(os.path.join(library_path, 'VERSION'), 'r') as fh:
     __version__ = fh.read().strip()
+
+
