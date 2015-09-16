@@ -1,7 +1,5 @@
-from fabric.context_managers import settings, hide
 from fabric.contrib import files
-from fabric.operations import run
-from fabric.api import cd, task
+from fabric.api import cd, task, run, sudo, settings, hide
 
 from genomekey_deploy.fab.gk import copy_genomekey_dev_environ
 from genomekey_deploy.util import apt_update
@@ -15,7 +13,7 @@ GENOME_KEY_USER = 'genomekey'
 
 @task
 def init_node():
-    with settings(user='root'), hide('output'):
+    with hide('output'):
         # note can make an AMI to avoid doing this
         # TODO get rid of this pastebin
         run('wget "http://pastebin.com/raw.php?i=uzhrtg5M" -O /etc/apt/sources.list')
@@ -31,10 +29,9 @@ def init_node():
 
         run('chown -R genomekey:genomekey /genomekey') # TODO fix the perms in the ami
 
-        with settings(user='genomekey'):
-            run('mkdir -p /mnt/genomekey/scratch')
-
-            sync_genomekey_share()
+    with settings(user=GENOME_KEY_USER):
+        run('mkdir -p /mnt/genomekey/scratch')
+        sync_genomekey_share()
 
 
 @task
@@ -75,7 +72,7 @@ def sync_genomekey_share(user=GENOME_KEY_USER):
     # with settings(user='root'):
         # TODO change the AMI and delete this?  This runs instantly so not a big deal
         # run('chown -R genomekey:genomekey /genomekey')
-
+    print 'sync genomekey share'
     with hide('output'):
         if files.exists('/genomekey/share') and not files.exists('/mnt/genomekey/share'):
             run('ln -s /genomekey/share /mnt/genomekey/share')

@@ -30,8 +30,8 @@ NODE_IMAGE_ID = ami-85d0c1b5 # testing public ubuntu ami
 # MASTER_INSTANCE_TYPE = c3.xlarge
 MASTER_INSTANCE_TYPE = c3.large # need about 31GB of local storage for genomekey/share
 
-# note, c3.4xlarge has 32 cores and BWA is set to request 32
-NODE_INSTANCE_TYPE = c3.8xlarge
+# WARNING! c3.8xlarge requires building a new AMI.  For whatever reason, the users/groups don't work right with this one
+NODE_INSTANCE_TYPE = c3.4xlarge
 #MASTER_IMAGE_ID = ami-3393a45a (OPTIONAL)
 AVAILABILITY_ZONE = us-west-2a
 #VOLUMES = oceandata, biodata

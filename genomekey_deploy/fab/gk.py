@@ -6,7 +6,7 @@ from fabric.state import env
 from fabric.api import run, hide, cd, settings
 import os
 from genomekey_deploy.util import tobool
-from genomekey_deploy.session import VE
+from . import VE
 
 
 __author__ = 'erik'

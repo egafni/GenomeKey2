@@ -15,6 +15,7 @@ def run_fab(func, hosts, *args, **kwargs):
         hosts = [hosts]
 
     env.key_filename = [hosts[0].key_location]  # Assume all hosts use the same key...
+    env.abort_on_promts=True
     kwargs['hosts'] = [h.ip_address for h in hosts]
     log.info('Run fab task: %s, key_filename=%s, args: %s, kwargs: %s' % (func.__name__, env.key_filename, args, kwargs))
     execute(func, *args, **kwargs)
