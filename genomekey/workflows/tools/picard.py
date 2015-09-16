@@ -1,5 +1,6 @@
 from cosmos.api import find, out_dir
-from ...api import settings as s
+from ...api import settings as s, s3
+
 
 def list_to_input(l):
     return " ".join('INPUT=%s' % x for x in l)
@@ -12,7 +13,6 @@ def picard(time_req=12 * 60, mem_req=3 * 1024, extra_java_args=''):
            '-jar {s[opt][picard]}'.format(s=s,
                                           mem_req2=int(mem_req * .8),
                                           **locals())
-
 
 def mark_duplicates(mem_req=3 * 1024,
                     in_bams=find('bam$', n='>=1'),

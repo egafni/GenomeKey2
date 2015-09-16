@@ -15,8 +15,9 @@ def run_fab(func, hosts, *args, **kwargs):
         hosts = [hosts]
 
     env.key_filename = [hosts[0].key_location]  # Assume all hosts use the same key...
-    log.info('Run fab task: %s, args: %s, kwargs: %s' % (func.__name__, args, kwargs))
-    execute(func, hosts=[h.ip_address for h in hosts], *args, **kwargs)
+    kwargs['hosts'] = [h.ip_address for h in hosts]
+    log.info('Run fab task: %s, key_filename=%s, args: %s, kwargs: %s' % (func.__name__, env.key_filename, args, kwargs))
+    execute(func, *args, **kwargs)
 
 
 class GenomeKeySetup(ClusterSetup):

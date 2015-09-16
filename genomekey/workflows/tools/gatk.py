@@ -25,6 +25,7 @@ def realigner_target_creator(mem_req=8 * 1024,
                              out_sites=out_dir('denovo_realign_targets.bed')):
     in_bams = bam_list_to_inputs(in_bams)
     intervals = arg('--intervals', target_bed)
+    # TODO should we pad intervals?  might be indels on perimeter that need realigner.  Not too worried because we're using HaplotypeCaller, though.
     return r"""
         #could add more knowns from ESP and other seq projects...
         {gatk} \
@@ -40,14 +41,14 @@ def realigner_target_creator(mem_req=8 * 1024,
 
 
 def indel_realigner(mem_req=8 * 1024,
+                    contig=None,
                     in_bams=find('bam$', n='>0'),
                     in_bais=find('bai$', n='>0'),
                     in_sites=find('denovo_realign_targets.bed'),
-                    in_target_bed=find('target.bed'),
                     out_bam=out_dir('realigned.bam'),
                     out_bai=out_dir('realigned.bai')):
     in_bams = bam_list_to_inputs(in_bams)
-    intervals = arg('--intervals', in_target_bed)
+    intervals = arg('--intervals', contig)
     return r"""
         # IR does not support parallelization
         {gatk} \

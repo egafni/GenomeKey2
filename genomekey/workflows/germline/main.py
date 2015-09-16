@@ -1,5 +1,6 @@
 from .util import parse_inputs
 from ...aws import s3
+from ...api import settings
 
 from ..tools import bwa, picard, gatk, samtools, fastqc, bed
 from . import util
@@ -30,7 +31,8 @@ def run_germline(execution, target_bed, input_path=None, use_s3_bucket=None):
                         for contig in util.get_contigs(target_bed)]
 
     # Load fastq inputs into NOOP tasks for easier downstream grouping
-    fastq_tasks = [execution.add_task(load_input, dict(in_file=fastq_path, **tags)) for fastq_path, tags in parse_inputs(input_path)]
+    fastq_tasks = [execution.add_task(load_input, dict(in_file=fastq_path, **tags), stage_name='Load_Fastqs')
+                   for fastq_path, tags in parse_inputs(input_path)]
 
     # Run Fastqc
     fastqc_tasks = many2one(execution, fastqc.fastqc, fastq_tasks, ['sample_name'], out_dir='output/{sample_name}/qc')
@@ -43,6 +45,15 @@ def run_germline(execution, target_bed, input_path=None, use_s3_bucket=None):
     if execution.successful:
         execution.log.info('Final vcf: %s' % os.path.join(use_s3_bucket if use_s3_bucket else execution.output_dir.output_dir,
                                                           called_tasks[0].output_files[0]))
+
+
+    # Copy the sqlite db to s3
+    dburl = settings['gk']['database_url']
+    if use_s3_bucket and dburl.startswith('sqlite'):
+        # TODO implement so there is a 1-to-1 relationship between a sqlite database and an Execution.  Currently this is pushing way too much information,
+        # TODO but will soon be replaced.  Alternative: use amazon RDS!  Or perhaps both?  Could do a sqlalchemy merge and save to sqlite, or implement
+        # TODO cosmos multiverse
+        s3.cp(dburl.replace('sqlite:///', ''), os.path.join(use_s3_bucket, 'sqlite.db.backup'))
 
 
 def align(execution, fastq_tasks, target_bed_tasks):
@@ -67,7 +78,7 @@ def align(execution, fastq_tasks, target_bed_tasks):
     # for target_bed_task in target_bed_tasks:
     # d = dict(contig=target_bed_task.tags['contig'],
     # in_target_bed=target_bed_task.output_files[0],
-    #                                      **tags)
+    # **tags)
     #
 
     rtc_tasks = [execution.add_task(gatk.realigner_target_creator,

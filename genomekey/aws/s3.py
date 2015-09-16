@@ -3,19 +3,23 @@ import os
 import decorator
 import sys
 from genomekey.api import settings as s
+from cosmos.core.cmd_fxn.io import Forward
 import random
 import subprocess as sp
 from cosmos.util.helpers import random_str
 from functools import partial
 import string
 import sys
+
 opj = os.path.join
+
 
 def dir_exists(path):
     return sp.Popen('aws s3 ls %s' % path, shell=True, stdout=sp.PIPE).wait() == 0
 
-def cp(from_, to, recursive=False, quiet=False,only_show_errors=True):
-    #todo try switching to gof3r, may be much faster
+
+def cp(from_, to, recursive=False, quiet=False, only_show_errors=True):
+    # todo try switching to gof3r, may be much faster
     # if is_dir:
     if to.endswith('/') or from_.endswith('/'):
         recursive = True
@@ -45,16 +49,21 @@ def split_bucket_key(s3_path):
 
 
 def stream_in(path, md5=False):
-    bucket, key = split_bucket_key(path)
-    md5 = '' if md5 else ' --no-md5'
-    return '<({s[opt][gof3r]} get{md5} -b {bucket} -k {key})'.format(s=s, **locals())
+    # bucket, key = split_bucket_key(path)
+    return '<(aws s3 cp %s -)' % path
+    # md5 = '' if md5 else ' --no-md5'
+    # return '<({s[opt][gof3r]} get{md5} -b {bucket} -k {key})'.format(s=s, **locals())
+
+
+def stream_out(path):
+    return '>(aws s3 cp - %s)' % path
 
 
 # def get_inputs(s3_root, input_file_paths):
-#     """
-#     Downloads inputs from s3_root into their relative path on the filesystem
+# """
+# Downloads inputs from s3_root into their relative path on the filesystem
 #
-#     ex get_inputs("s3://bucket/folder", "a/b") would download file "b" into "a/b"
+# ex get_inputs("s3://bucket/folder", "a/b") would download file "b" into "a/b"
 #     """
 #
 #     def g():
@@ -76,7 +85,7 @@ def can_stream(input_param_names):
         input_param_names = [input_param_names]
 
     def wrapper(fxn):
-        fxn.s3_stream_params = input_param_names
+        fxn.can_stream = input_param_names
         return fxn
 
     return wrapper
@@ -113,11 +122,14 @@ def make_s3_cmd_fxn_wrapper(s3_path):
             1) If input starts with s3:// or s3_path is set, pull or stream
             3) If s3_path is set, push outputs to S3
             """
+            fxn_sig = funcsigs.signature(fxn)
 
-            # for some reason decorator is using args instead of kwargs..
-            # repopulate kwargs manually
-            for i, (k, parameter) in enumerate(funcsigs.signature(fxn).parameters.items()):
+            # for some reason decorator.decorator is using args instead of kwargs..
+            # repopulate kwargs manually.
+            for i, (k, parameter) in enumerate(fxn_sig.parameters.items()):
                 kwargs[k] = args[i]
+
+            # HANDLE INPUTS
 
             def process_input_map():
                 # TODO this function should probably be refactored for readability
@@ -125,7 +137,7 @@ def make_s3_cmd_fxn_wrapper(s3_path):
                     """
                     :returns: s3_copy_command, new_input_value
                     """
-                    if input_param_name in getattr(fxn, 's3_stream_params', []):
+                    if input_param_name in getattr(fxn, 'can_stream', []):
                         # do not pull, change value to stream in
                         if file_path.startswith('s3://'):
                             return None, stream_in(file_path)
@@ -152,38 +164,50 @@ def make_s3_cmd_fxn_wrapper(s3_path):
                         s3_pull_all_inputs.append(cp_str)
                         kwargs[input_name] = new_input_value
 
-                return "\n".join(filter(bool, s3_pull_all_inputs)) # remove the Nones for stream_in
+                return "\n".join(filter(bool, s3_pull_all_inputs))  # remove the Nones for stream_in
 
             s3_pull_all_inputs_cmd = process_input_map() if not task.tags.get('skip_s3_pull', False) else ''
 
-            prepend = '#!/bin/bash\n' \
-                      'set -e\n' \
-                      'set -o pipefail\n\n' \
-                      'TMP_DIR=`mktemp -d --tmpdir={s[gk][tmp_dir]} {stage_name}_XXXXXXXXX` \n' \
-                      'echo "Created temp dir: $TMP_DIR" > /dev/stderr\n' \
-                      'cd $TMP_DIR\n' \
-                      '{make_output_dir}\n\n' \
-                      '# S3: Pull inputs\n' \
-                      '{s3_pull_all_inputs}\n' \
-                      '\n'.format(s=s,
-                                  stage_name=stage_name,
-                                  s3_pull_all_inputs=s3_pull_all_inputs_cmd,
-                                  make_output_dir='mkdir -p %s\n' % task.output_dir if task.output_dir and task.output_dir != '' else '',
+            prepend = """#!/bin/bash
+set -e
+set -o pipefail
+
+TMP_DIR=`mktemp -d --tmpdir={s[gk][tmp_dir]} {stage_name}_XXXXXXXXX`
+echo "Created temp dir: $TMP_DIR" > /dev/stderr
+trap "rm -rf $TMP_DIR" EXIT
+cd $TMP_DIR
+
+{make_output_dir}
+# S3: Pull inputs
+{s3_pull_all_inputs}\n\n""".format(s=s,
+                                   stage_name=stage_name,
+                                   s3_pull_all_inputs=s3_pull_all_inputs_cmd,
+                                   make_output_dir='mkdir -p %s\n' % task.output_dir if task.output_dir and task.output_dir != '' else '',
             )
+
+            # HANDLE OUTPUTS
 
             def gen_pushes():
                 if s3_path:
-                    for output_vals in output_map.values():
-                        if not isinstance(output_vals, list):
-                            output_vals = [output_vals]
-                        for out in output_vals:
-                            yield cp(out, opj(s3_path, out))
+                    for output_name, output_vals in output_map.items():
+                        if isinstance(fxn_sig.parameters[output_name].default, Forward):
+                            # do not s3 push if this is a forwarded input
+                            continue
+                        else:
+                            if not isinstance(output_vals, list):
+                                output_vals = [output_vals]
+
+                            for out_val in output_vals:
+                                if output_name in getattr(fxn, 'can_stream', []):
+                                    kwargs[output_name] = stream_out(opj(s3_path, out_val))
+                                    # do not push since we're streaming
+                                else:
+                                    yield cp(out_val, opj(s3_path, out_val))
 
             append = '\n\n' \
                      '#S3: Push Outputs\n' \
-                     '{s3_push_all_outputs}\n' \
-                     'rm -rf $TMP_DIR'.format(s=s,
-                                              s3_push_all_outputs="\n".join(gen_pushes()))
+                     '{s3_push_all_outputs}\n'.format(s=s,
+                                                      s3_push_all_outputs="\n".join(gen_pushes()))
 
             r = fxn(**kwargs)
             # print prepend, r, append

@@ -30,8 +30,8 @@ NODE_IMAGE_ID = ami-85d0c1b5 # testing public ubuntu ami
 # MASTER_INSTANCE_TYPE = c3.xlarge
 MASTER_INSTANCE_TYPE = c3.large # need about 31GB of local storage for genomekey/share
 
-# note, x3.4xlarge has 16 cores and BWA is set to request 16
-NODE_INSTANCE_TYPE = c3.4xlarge
+# note, c3.4xlarge has 32 cores and BWA is set to request 32
+NODE_INSTANCE_TYPE = c3.8xlarge
 #MASTER_IMAGE_ID = ami-3393a45a (OPTIONAL)
 AVAILABILITY_ZONE = us-west-2a
 #VOLUMES = oceandata, biodata
@@ -41,7 +41,7 @@ disable_queue = True # necessary to customize sge options
 # genomekey needs to be before sge because reference data needs to be synced before the node can run jobs
 PLUGINS = createusers, genomekey, sge, sge_plus
 PERMISSIONS = ssh, http2, ipython_notebook, ganglia
-SPOT_BID = 0.50
+SPOT_BID = 0.70
 #USERDATA_SCRIPTS = /path/to/script1, /path/to/script2
 
 [cluster genomekey2]

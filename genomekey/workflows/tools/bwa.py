@@ -5,7 +5,7 @@ from genomekey.aws import s3
 @s3.can_stream(['in_fastq1', 'in_fastq2'])
 def bwa_mem(rgid, sample_name, library, platform, platform_unit,
             reference=s['ref']['reference_fasta'],
-            cpu_req=16,
+            cpu_req=32,
             # reads=find('fastq|fastq.gz', n=2),
             in_fastq1=find('.fastq', tags=dict(read_pair='1')),
             in_fastq2=find('.fastq', tags=dict(read_pair='2')),
