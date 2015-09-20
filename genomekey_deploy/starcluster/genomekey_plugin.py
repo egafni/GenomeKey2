@@ -26,8 +26,7 @@ class GenomeKeySetup(ClusterSetup):
     Interface for StarCluster to use the genomekey_deploy fab files.  There should be very minimal logic here.
     """
 
-    def __init__(self, install_dev_environ=False,
-                 **kwargs):
+    def __init__(self, install_dev_environ=True,  **kwargs):
         self.install_dev_environ = tobool(install_dev_environ)
         super(ClusterSetup, self).__init__(**kwargs)
 

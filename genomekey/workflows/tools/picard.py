@@ -1,12 +1,12 @@
 from cosmos.api import find, out_dir
-from ...api import settings as s, s3
+from genomekey.api import settings as s
 
 
 def list_to_input(l):
     return " ".join('INPUT=%s' % x for x in l)
 
 
-def picard(time_req=12 * 60, mem_req=3 * 1024, extra_java_args=''):
+def picard(time_req=8 * 60, mem_req=3 * 1024, extra_java_args=''):
     return 'java{extra_java_args} ' \
            '-Xmx{mem_req2}m -Djava.io.tmpdir={s[gk][tmp_dir]} ' \
            '-Dsnappy.loader.verbosity=true ' \
@@ -14,17 +14,18 @@ def picard(time_req=12 * 60, mem_req=3 * 1024, extra_java_args=''):
                                           mem_req2=int(mem_req * .8),
                                           **locals())
 
-def mark_duplicates(mem_req=3 * 1024,
+
+def mark_duplicates(mem_req=8 * 1024,
                     in_bams=find('bam$', n='>=1'),
                     in_bais=find('bai$', n='>=1'),
                     out_bam=out_dir('deduped.bam'),
                     out_bai=out_dir('deduped.bam.bai'),
-                    metrics=out_dir('deduped.metrics')):
+                    out_metrics=out_dir('deduped.metrics')):
     return r"""
         {picard} MarkDuplicates \
         {inputs} \
         O={out_bam} \
-        METRICS_FILE={metrics} \
+        METRICS_FILE={out_metrics} \
         ASSUME_SORTED=True \
         MAX_RECORDS_IN_RAM=1000000 \
         VALIDATION_STRINGENCY=SILENT \
@@ -36,3 +37,46 @@ def mark_duplicates(mem_req=3 * 1024,
                **locals())
 
 
+def fastq_to_sam(rgid, sample_name, library, platform, platform_unit,
+                 in_fastq1=find('.fastq', tags=dict(read_pair='1')),
+                 in_fastq2=find('.fastq', tags=dict(read_pair='2')),
+                 out_bam=out_dir('unaligned.bam')):
+    return r"""
+        {picard} FastqToSam \
+        FASTQ={in_fastq1} \
+        FASTQ2={in_fastq2} \
+        O={out_bam} \
+        SAMPLE_NAME={sample_name} \
+        LIBRARY_NAME={library} \
+        PLATFORM_UNIT={platform_unit} \
+        PLATFORM={platform} \
+        READ_GROUP_NAME={rgid}
+
+    """.format(s=s,
+               picard=picard(),
+               **locals())
+
+
+def sam_to_fastq_interleave(in_bam=find('bam$'),
+                            out_fastq=out_dir('reads.fastq')):
+    return r"""
+        {picard} SamToFastq \
+        I={in_bam} \
+        FASTQ={out_fastq}
+    """.format(s=s,
+               picard=picard(),
+               **locals())
+
+
+def mark_illumina_adapters(mem_req=8 * 1024,
+                           in_bam=find('bam'),
+                           out_bam=out_dir('unaligned_trimmed.bam'),
+                           out_metrics=out_dir('adapter.metrics')):
+    return r"""
+        {picard} MarkIlluminaAdapters\
+        I={in_bam} \
+        O={out_bam} \
+        METRICS={out_metrics}
+    """.format(s=s,
+               picard=picard(),
+               **locals())

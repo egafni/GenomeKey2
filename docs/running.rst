@@ -22,7 +22,7 @@ pulled down by the alignment tasks.
 Test Workflows
 +++++++++++++++
 
-Here are some example datasets to test
+Here are some example datasets to test.  If running with --s3fs, make sure the bucket (s3://genomekey-out in the examples below), exists.
 
 .. code-block:: bash
 
@@ -31,11 +31,11 @@ Here are some example datasets to test
     ~/bin/genomekey -d germline -n 'BRCA' input_s3.tsv --target_bed targets.bed -ry
 
     # A single gene, using s3 asthe file system
-    ~/bin/genomekey -d germline -n 'BRCA_s3fs' /genomekey/share/test/brca/input_s3.tsv --target_bed /genomekey/share/test/brca/targets.bed --use_s3_bucket s3://genomekey-out -ry
+    ~/bin/genomekey -d germline -n 'BRCA_s3fs' /genomekey/share/test/brca/input_s3.tsv --target_bed /genomekey/share/test/brca/targets.bed --s3fs s3://genomekey-out -ry
 
     # A gene panel
     cd /mnt/genomekey/share/test/1000g
-    genomekey germline -n 'Test_Exon_s3fs' /genomekey/share/test/1000g/exons.tsv  -t /genomekey/share/test/1000g/P3_consensus_exonic_targets.bed --use_s3 s3://genomekey-out -ry
+    genomekey germline -n 'Test_Exon_s3fs' /genomekey/share/test/1000g/exons.tsv  -t /genomekey/share/test/1000g/P3_consensus_exonic_targets.bed --s3fs s3://genomekey-out -ry
 
     # Two Exomes
 

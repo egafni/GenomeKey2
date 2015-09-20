@@ -2,7 +2,7 @@ from cosmos.api import find, out_dir
 from genomekey.api import settings as s
 
 
-def spit_bed_by_contig(contig,
+def filter_bed_by_contig(contig,
                        drm='local',
                        in_bed=find('bed$'),
                        out_bed=out_dir('target.bed')):

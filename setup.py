@@ -37,6 +37,7 @@ setup(
     install_requires=[
         'cosmos-wfm',
         'configparser',
+        'futures',
         'ipdb',
         'twilio',
         'gntp',

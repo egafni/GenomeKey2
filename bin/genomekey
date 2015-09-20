@@ -4,10 +4,9 @@ import os
 import sys
 
 from cosmos import add_execution_args, Execution
-from genomekey.workflows.germline.main import run_germline
+from genomekey.workflows.germline.recipe import run_germline
 from genomekey.util.misc import assert_references_exist
-from genomekey.aws import s3
-from genomekey.api import GenomeKey, settings as s, library_path
+from genomekey.api import GenomeKey, settings as s, library_path, s3run, s3cmd
 
 opj = os.path.join
 
@@ -79,7 +78,7 @@ def parse_args():
     sp = sps.add_parser('germline', help=run_germline.__doc__)
     sp.set_defaults(func=run_germline)
     sp.add_argument('input_path', help='file with inputs')
-    sp.add_argument('--use_s3_bucket', '-s3', default=False,
+    sp.add_argument('--s3fs', '-s3', default=False,
                     help='upload/download all output files to this s3 bucket.  Removes the need'
                          'for a shared filesystem')
     sp.add_argument('--target_bed', '-t', required=True)  # default to whole genome target bed?
@@ -120,27 +119,27 @@ def parse_args():
         ex.info['comments'] = comments
         kwargs['execution'] = ex
 
-        use_s3_bucket = kwargs.get('use_s3_bucket', None)
-        if use_s3_bucket:
+        s3fs = kwargs.get('s3fs', None)
+        if s3fs:
             # AWS cli will produce the following error sometimes if this environment variable is not set
             # [Errno 1] _ssl.c:504: error:14090086:SSL routines:SSL3_GET_SERVER_CERTIFICATE:certificate verify failed
             os.environ['REQUESTS_CA_BUNDLE']='/etc/ssl/certs/ca-certificates.crt'
 
-            use_s3_bucket = os.path.join(use_s3_bucket, d['name'])
-            kwargs['use_s3_bucket'] = use_s3_bucket
-            ex.info['use_s3_bucket'] = use_s3_bucket
+            s3fs = os.path.join(s3fs, d['name'])
+            kwargs['s3fs'] = s3fs
+            ex.info['s3fs'] = s3fs
 
-            dir_exists = s3.dir_exists(use_s3_bucket)
+            dir_exists = s3run.path_exists(s3fs)
             if dir_exists:
                 if not resuming_execution:
                     ex.log.error('Cannot write to %s, the directory already exists but Execution with name `%s` was not in the database.  '
-                                 'Either use a different execution name, or run: \n`aws s3 rm %s --recursive`'% (use_s3_bucket, d['name'], use_s3_bucket))
+                                 'Either use a different execution name, or run: \n`aws s3 rm %s --recursive`'% (s3fs, d['name'], s3fs))
                     ex.terminate(due_to_failure=False)
                     ex.delete(delete_files=True)
                     sys.exit(0)
                 elif d['restart']:
-                    ex.log.info('Deleting S3 Objects in %s since restart==True' % use_s3_bucket)
-                    s3.delete_s3_dir(use_s3_bucket, skip_confirm=d['skip_confirm'])
+                    ex.log.info('Deleting S3 Objects in %s since restart==True' % s3fs)
+                    s3run.delete_s3_dir(s3fs, skip_confirm=d['skip_confirm'])
 
 
         # required for gof3r, which doesn't check ~/.aws/config files

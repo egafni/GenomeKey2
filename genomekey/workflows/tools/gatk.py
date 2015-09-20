@@ -17,14 +17,14 @@ def gatk(mem_req=5 * 1024):
 
 def realigner_target_creator(mem_req=8 * 1024,
                              cpu_req=4,
-                             target_bed=find('target.bed'),
+                             in_target_bed=find('target.bed'),
                              in_bams=find('bam$', n='>0'),
                              in_bais=find('bai$', n='>0'),
                              out_bams=forward('in_bams'),
                              out_bais=forward('in_bais'),
                              out_sites=out_dir('denovo_realign_targets.bed')):
     in_bams = bam_list_to_inputs(in_bams)
-    intervals = arg('--intervals', target_bed)
+    intervals = arg('--intervals', in_target_bed)
     # TODO should we pad intervals?  might be indels on perimeter that need realigner.  Not too worried because we're using HaplotypeCaller, though.
     return r"""
         #could add more knowns from ESP and other seq projects...
@@ -48,7 +48,6 @@ def indel_realigner(mem_req=8 * 1024,
                     out_bam=out_dir('realigned.bam'),
                     out_bai=out_dir('realigned.bai')):
     in_bams = bam_list_to_inputs(in_bams)
-    intervals = arg('--intervals', contig)
     return r"""
         # IR does not support parallelization
         {gatk} \
@@ -63,7 +62,10 @@ def indel_realigner(mem_req=8 * 1024,
         {intervals}
 
         {s[opt][samtools]} index {out_bam}
-    """.format(s=s, gatk=gatk(mem_req), **locals())
+    """.format(s=s,
+               intervals=arg('--intervals', contig),
+               gatk=gatk(mem_req),
+               **locals())
 
 
 def haplotype_caller(cpu_req=8,
