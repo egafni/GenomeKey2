@@ -1,23 +1,29 @@
 import re
 import os
-
+from genomekey.api import settings
 opj = os.path.join
 
 
-def cp(from_, to, recursive=False, quiet=False, only_show_errors=True):
+
+def cp(from_, to, chrom=None, recursive=False, quiet=False, only_show_errors=True):
     # todo try switching to gof3r, may be much faster
-    # if is_dir:
-    if to.endswith('/') or from_.endswith('/'):
-        recursive = True
-    return 'aws s3 cp{quiet}{only_show_errors}{recursive} {from_} {to}'.format(
-        from_=from_,
-        to=to,
-        quiet=' --quiet' if quiet else '',
-        only_show_errors=' --only-show-errors' if only_show_errors else '',
-        recursive=' --recursive' if recursive else ''
-    )
-    # else:
-    # return 'aws s3 cp --quiet %s %s' % (from_, to)
+    if chrom and from_.startswith('s3://') and from_.endswith('.bam'):
+        dirname = os.path.dirname(to)
+        return 'bash -c "mkdir -p {dirname}; \\\n' \
+               '{s[opt][samtools]} view -hb {from_} {chrom}: > {to}; \\\n' \
+               '{s[opt][samtools]} index {to}"'.format(s=settings, **locals())
+    else:
+        if to.endswith('/') or from_.endswith('/'):
+            recursive = True
+        return 'aws s3 cp{quiet}{only_show_errors}{recursive} {from_} {to}'.format(
+            from_=from_,
+            to=to,
+            quiet=' --quiet' if quiet else '',
+            only_show_errors=' --only-show-errors' if only_show_errors else '',
+            recursive=' --recursive' if recursive else ''
+        )
+        # else:
+        # return 'aws s3 cp --quiet %s %s' % (from_, to)
 
 
 def split_bucket_key(s3_path):

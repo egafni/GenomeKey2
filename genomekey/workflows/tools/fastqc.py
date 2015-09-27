@@ -20,7 +20,7 @@ def fastqc(cpu_req=8,
         # TODO make sure we are concating to local temp disc if available.  For the usual S3 option this is fine, since we're already in a tmp dir
         # TODO stream from s3 into a cat command when input files start with s3://
 
-        r1, r2 = os.path.join('cat_r1.fastq.gz'), os.path.join('cat_r2.fastq.gz')
+        r1, r2 ='cat_r1.fastq.gz', 'cat_r2.fastq.gz'
         cat = r"""
             cat {r1s_join} > {r1}
             cat {r2s_join} > {r2}
@@ -34,15 +34,17 @@ def fastqc(cpu_req=8,
         cat = ""
         cleanup = ""
 
-    return r"""
-            {cat}
+    cat = 'cat %s | zcat' % ' '.join(in_r1s+in_r2s)
 
+    return r"""
             mkdir -p {out_dir}
+
+            {cat} | \
             {s[opt][fastqc]} \
             --threads {cpu_req} \
             --dir {s[gk][tmp_dir]} \
             -o {out_dir} \
-            {r1} {r2}
+            /dev/stdin
 
-            {cleanup}
+            #{cleanup}
             """.format(s=s, **locals())

@@ -39,7 +39,7 @@ def run_germline(execution, target_bed, input_path=None, s3fs=None):
     fastq_tasks = [execution.add_task(load_input, dict(in_file=fastq_path, **tags), stage_name='Load_Fastqs')
                    for fastq_path, tags in parse_inputs(input_path)]
 
-    fastqc_tasks = many2one(fastqc.fastqc, fastq_tasks, ['sample_name', 'rgid'], out_dir='SM_{sample_name}/qc/RG_{rgid}')
+    fastqc_tasks = many2one(fastqc.fastqc, fastq_tasks, ['sample_name', 'library'], out_dir='SM_{sample_name}/qc/LB_{library}')
 
     # fastq_tasks = split_large_fastq_files(execution, fastq_tasks) # not working yet
     aligned_tasks = align(execution, fastq_tasks, target_bed_tasks)
