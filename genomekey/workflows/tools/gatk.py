@@ -15,8 +15,8 @@ def gatk(mem_req=5 * 1024):
     )
 
 
-def realigner_target_creator(mem_req=8 * 1024,
-                             cpu_req=4,
+def realigner_target_creator(cpu_req=4,
+                             mem_req=8 * 1024,
                              in_target_bed=find('target.bed'),
                              in_bams=find('bam$', n='>0'),
                              in_bais=find('bai$', n='>0'),

@@ -1,5 +1,5 @@
 from cosmos.api import find, out_dir
-from genomekey.api import settings as s
+from genomekey.api import settings as s, can_stream
 
 
 def list_to_input(l):
@@ -15,7 +15,9 @@ def picard(time_req=8 * 60, mem_req=3 * 1024, extra_java_args=''):
                                           **locals())
 
 
-def mark_duplicates(mem_req=8 * 1024,
+# @can_stream([''])
+def mark_duplicates(cpu_req=16,  # for scratch space
+                    mem_req=12 * 1024,
                     in_bams=find('bam$', n='>=1'),
                     in_bais=find('bai$', n='>=1'),
                     out_bam=out_dir('deduped.bam'),

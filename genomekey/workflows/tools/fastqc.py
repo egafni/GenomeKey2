@@ -2,23 +2,24 @@ import os
 
 from cosmos.api import find, out_dir
 from ...api import settings as s
-from genomekey.aws import s3
+from genomekey.api import can_stream
 from cosmos.util.helpers import random_str
 
-#skip_s3_pull
-def fastqc(cpu_req=2,
+# cpu_req is high so nodes don't run out of scratch
+@can_stream(['in_r1s', 'in_r2s'])
+def fastqc(cpu_req=8,
            in_r1s=find('fastq', n='>=1', tags=dict(read_pair='1')),
            in_r2s=find('fastq', n='>=1', tags=dict(read_pair='2')),
            out_dir=out_dir('fastqc/')):
-
     assert len(in_r1s) == len(in_r2s)
 
-    if len(in_r1s) > 1:
+    if len(in_r1s) > 1 or in_r1s[0].startswith('<('):
         # If there are more than 1 fastqs per read_pair, merge them into one file per read_pair
         # Note, catting compressed files together seems fine
         # Have to cat because fastqc does not support streaming
         # TODO make sure we are concating to local temp disc if available.  For the usual S3 option this is fine, since we're already in a tmp dir
         # TODO stream from s3 into a cat command when input files start with s3://
+
         r1, r2 = os.path.join('cat_r1.fastq.gz'), os.path.join('cat_r2.fastq.gz')
         cat = r"""
             cat {r1s_join} > {r1}

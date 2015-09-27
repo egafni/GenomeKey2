@@ -31,15 +31,15 @@ def run_germline(execution, target_bed, input_path=None, s3fs=None):
     # Copy the target.bed to the output_dir
     assert os.path.exists(target_bed), '%s does not exist' % target_bed
     cp_target_bed_task = execution.add_task(lambda drm='local', out_bed=out_dir('target.bed'): 'cp %s %s' % (target_bed, out_bed),
-                                            out_dir='output', stage_name='Copy_Target_Bed')
+                                            out_dir='', stage_name='Copy_Target_Bed')
 
-    target_bed_tasks = [execution.add_task(bed.filter_bed_by_contig, dict(contig=contig), [cp_target_bed_task], 'work/contigs/{contig}')
+    target_bed_tasks = [execution.add_task(bed.filter_bed_by_contig, dict(contig=contig), [cp_target_bed_task], 'tmp/contigs/{contig}')
                         for contig in util.get_bed_contigs(target_bed)]
 
     fastq_tasks = [execution.add_task(load_input, dict(in_file=fastq_path, **tags), stage_name='Load_Fastqs')
                    for fastq_path, tags in parse_inputs(input_path)]
 
-    fastqc_tasks = many2one(fastqc.fastqc, fastq_tasks, ['sample_name'], out_dir='output/{sample_name}/qc')
+    fastqc_tasks = many2one(fastqc.fastqc, fastq_tasks, ['sample_name', 'rgid'], out_dir='SM_{sample_name}/qc/RG_{rgid}')
 
     # fastq_tasks = split_large_fastq_files(execution, fastq_tasks) # not working yet
     aligned_tasks = align(execution, fastq_tasks, target_bed_tasks)
@@ -72,7 +72,7 @@ def split_large_fastq_files(execution, fastq_tasks):
                 num_chunks = int(math.ceil(float(file_size) / FASTQ_MAX_CHUNK_SIZE))
                 assert num_chunks < 100, 'Doubt you want this many chunks'
 
-                out_path = 'work/{sample_name}/LB_{library}/RP_{read_pair}/CH_{chunk}'.format(**fastq_task.tags)
+                out_path = 'SM_{sample_name}/work/LB_{library}/RP_{read_pair}/chunk{chunk}'.format(**fastq_task.tags)
                 prefix = opj(out_path, 'reads_')
 
                 split_task = execution.add_task(fastq.split_fastq_file,
@@ -106,15 +106,12 @@ def align(execution, fastq_tasks, target_bed_tasks):
     """
 
     # Do we need to split fastqs into smaller pieces?
-    trimmed = many2one(fastq.cutadpt, fastq_tasks, ['sample_name', 'library', 'platform', 'platform_unit', 'rgid', 'chunk'],
-                    out_dir='output/{sample_name}/{rgid}/{chunk}')
+    trimmed = many2one(fastq.cut_adapt, fastq_tasks, ['sample_name', 'library', 'platform', 'platform_unit', 'rgid', 'chunk'],
+                       out_dir='SM_{sample_name}/work/RG_{rgid}/CH_{chunk}')
 
-    aligns = one2one(bwa.bwa_mem, trimmed, out_dir='output/{sample_name}/{rgid}/{chunk}')
+    aligns = one2one(bwa.bwa_mem, trimmed, out_dir='SM_{sample_name}/work/RG_{rgid}/CH_{chunk}')
 
-    dedupe = many2one(picard.mark_duplicates, aligns, groupby=['sample_name', 'library'], out_dir='work/{sample_name}/lb_{library}')
-
-    # Skipping BQSR.  Will improve results only slightly, if at all.
-
+    dedupe = many2one(picard.mark_duplicates, aligns, groupby=['sample_name', 'library'], out_dir='SM_{sample_name}/work/LB_{library}')
 
     # Note, could get slightly improved results by indel realigning over multiple samples, especially if low coverage
     # for tags, parents in group(dedupe, ['sample_name']):
@@ -128,18 +125,19 @@ def align(execution, fastq_tasks, target_bed_tasks):
                                     dict(contig=target_bed_task.tags['contig'],
                                          in_target_bed=target_bed_task.output_files[0], **tags),
                                     parents + [target_bed_task],
-                                    out_dir='work/{sample_name}/contigs/{contig}')
+                                    out_dir='work/SM_{sample_name}/contigs/{contig}')
                  for tags, parents in group(dedupe, ['sample_name'])  # Many2one
                  for target_bed_task in target_bed_tasks]  # One2many
 
     realigned_by_sample_contig_tasks = one2one(gatk.indel_realigner, rtc_tasks)
 
+
+    # Skipping BQSR.  Will improve results only slightly, if at all.
+
+
     # Merge bams so we have a sample bam.  Returning realign, so bams remained split by contig for downstream
     # parallelization
-    merged_bams = [execution.add_task(samtools.merge, tags=dict(bam_name='aligned', **tags), parents=parents, out_dir='', stage_name="Merge_Sample_Bams")
-                   for tags, parents in group(realigned_by_sample_contig_tasks, ['sample_name'])],
-
-    many2one(samtools.merge, realigned_by_sample_contig_tasks, ['sample_name'], out_dir='output/{sample_name}', stage_name="Merge_Sample_Bams")
+    many2one(samtools.merge, realigned_by_sample_contig_tasks, ['sample_name'], out_dir='SM_{sample_name}', stage_name="Merge_Sample_Bams")
 
     return realigned_by_sample_contig_tasks
 
@@ -156,12 +154,12 @@ def variant_call(execution, aligned_tasks, target_bed_tasks):
     contig_to_targets = {t.tags['contig']: t for t in target_bed_tasks}
 
     hapcall_tasks = [execution.add_task(gatk.haplotype_caller, tags=tags, parents=parents + [contig_to_targets[tags['contig']]],
-                                        out_dir='work/{sample_name}/contigs/{contig}')
+                                        out_dir='SM_{sample_name}/work/contigs/{contig}')
                      for tags, parents in group(aligned_tasks, ['sample_name', 'contig'])]
 
-    combine_gvcf_tasks = many2one(gatk.combine_gvcfs, hapcall_tasks, groupby=['sample_name'], out_dir='output/{sample_name}')
+    combine_gvcf_tasks = many2one(gatk.combine_gvcfs, hapcall_tasks, groupby=['sample_name'], out_dir='SM_{sample_name}')
 
-    genotype_tasks = many2one(gatk.genotype_gvcfs, hapcall_tasks, groupby=[], out_dir='output')
+    genotype_tasks = many2one(gatk.genotype_gvcfs, hapcall_tasks, groupby=[], out_dir='')
 
     # Run VQSR or some basic filtering?
 

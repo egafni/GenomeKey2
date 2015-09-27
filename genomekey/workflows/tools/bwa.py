@@ -25,11 +25,10 @@ def bwa_mem(rgid, sample_name, library, platform, platform_unit,
               {reference} \
               {in_fastq1} \
               {in_fastq2} \
-            | {s[opt][samtools]} sort -@ 2 -m 2G - - > {out_bam}
+            | {s[opt][samtools]} sort -@ 2 -m 2G - {samtools_out}
 
             {s[opt][samtools]} index {out_bam}
             """.format(s=s,
-
                        samtools_out=out_bam.replace('.bam', ''),
                        **locals())
 

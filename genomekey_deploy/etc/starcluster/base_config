@@ -19,7 +19,7 @@ NODE_IMAGE_ID = ami-9dc0d0ad
 # (options: m3.large, c3.8xlarge, i2.8xlarge, t2.micro, hs1.8xlarge, c1.xlarge, r3.4xlarge, g2.2xlarge, m1.small, c1.medium, m3.2xlarge, c3.2xlarge, m2.xlarge, m2.2xlarge, t2.small, r3.2xlarge, t1.micro, cr1.8xlarge, r3.8xlarge, cc1.4xlarge, m1.medium, r3.large, c3.xlarge, i2.xlarge, m3.medium, cc2.8xlarge, m1.large, cg1.4xlarge, i2.2xlarge, c3.large, i2.4xlarge, c3.4xlarge, r3.xlarge, t2.medium, hi1.4xlarge, m2.4xlarge, m1.xlarge, m3.xlarge)
 # using c3s because they have local SSD and instance type need local space to write to
 # MASTER_INSTANCE_TYPE = c3.xlarge
-MASTER_INSTANCE_TYPE = c3.large # need about 31GB of local storage for genomekey/share
+MASTER_INSTANCE_TYPE = c3.large
 
 # WARNING! c3.8xlarge requires building a new AMI.  For whatever reason, the users/groups don't work right with this one
 NODE_INSTANCE_TYPE = c3.4xlarge
