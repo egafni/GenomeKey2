@@ -65,8 +65,8 @@ def parse_args():
 
     sp = sps.add_parser('runweb', help=cosmos.runweb.__doc__)
     sp.add_argument('-p', '--port', type=int, default=5000, help='port to bind the server to')
-    # sp.add_argument('-H', '--host', default='localhost', help='host to bind the server to')
-    sp.set_defaults(func=lambda port: cosmos.runweb('0.0.0.0', port))
+    sp.add_argument('-H', '--host', default='0.0.0.0', help='host to bind the server to')
+    sp.set_defaults(func=cosmos.runweb)
 
 
     def add_execution_args2(sp):

@@ -27,3 +27,4 @@ if not os.path.exists(conf_path):
                                                                                                          'genomekey.conf')))
 settings = ConfigParser(interpolation=ExtendedInterpolation())
 settings.read(conf_path)
+# settings['bin'] = bin

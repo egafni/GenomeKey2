@@ -9,9 +9,9 @@ def cp(from_, to, chrom=None, recursive=False, quiet=False, only_show_errors=Tru
     # todo try switching to gof3r, may be much faster
     if chrom and from_.startswith('s3://') and from_.endswith('.bam'):
         dirname = os.path.dirname(to)
-        return 'bash -c "mkdir -p {dirname}; \\\n' \
-               '{s[opt][samtools]} view -hb {from_} {chrom}: > {to}; \\\n' \
-               '{s[opt][samtools]} index {to}"'.format(s=settings, **locals())
+        return 'mkdir -p {dirname} && ' \
+               '{s[opt][samtools]} view -hb {from_} {chrom}: > {to} && ' \
+               '{s[opt][samtools]} index {to}'.format(s=settings, **locals())
     else:
         if to.endswith('/') or from_.endswith('/'):
             recursive = True

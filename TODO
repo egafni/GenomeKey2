@@ -1,0 +1,8 @@
+
+* figure out how to slice bams in s3 using the bam index
+
+* AMI changes:
+  - Remove any .aws or .genomekey files
+  - apt-get some stuff (ex for mdadm)
+  - sync genomekey-share
+  - Good time to make c3.8x?
