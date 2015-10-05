@@ -6,7 +6,7 @@ Install StarCluster
 +++++++++++++++++++
 
 1) Create an aws private key (using starcluster or aws console) at save it somewhere like ~/.starcluster/your_key.rsa
-2) Install starcluster into a local genomekey installation (so that it has access to the genomekey_deploy package)
+2) Install starcluster and starclusterextensions
 
 .. code-block:: bash
 
@@ -18,8 +18,8 @@ Install StarCluster
 
     # This is the default genomekey starcluster configuration
     # Changing anything besides private key locations and AWS credentials is not recommended (unless you're an advanced user)
-    cp $GK_HOME/genomekey/aws/starcluster/config ~/.starcluster/config
-    # Edit ~/.starcluster/config and follow the instructions
+    cp $GK_HOME/genomekey/etc/starcluster/config ~/.starcluster/config
+    # Edit ~/.starcluster/config and fill out necessary fields
 
 
     # install the aws cli, and configure it as well (you have to store your AWS credentials in two places)

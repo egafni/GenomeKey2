@@ -5,6 +5,8 @@ Install GenomeKey
 
 .. code-block:: bash
 
+    apt-get install awscli # or brew install awscli
+
     pip install virtualenv --user
     mkdir -p ~/projects
     cd ~/projects
@@ -21,5 +23,6 @@ Install GenomeKey
     genomekey -h
     # Copy and edit config file as instructed
 
-    genomekey initdb
+
+
 
