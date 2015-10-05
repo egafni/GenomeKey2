@@ -1,0 +1,19 @@
+[global]
+INCLUDE=~/projects/StarClusterExtensions/sce/plugins/genomekey/etc/starcluster/base_config
+
+# AWS
+
+[aws info]
+AWS_ACCESS_KEY_ID =
+AWS_SECRET_ACCESS_KEY =
+AWS_REGION_NAME = us-west-2
+AWS_REGION_HOST = ec2.us-west-2.amazonaws.com
+
+# Key location, change to your keyname and location, then update KEYNAME below
+# To create a key, you can use the command: starcluster createkey genomekey_key -o ~/.starcluster/genomekey_key.rsa
+[key genomekey_key]
+KEY_LOCATION=~/.starcluster/genomekey_key.rsa
+
+
+[cluster genomekey]
+KEYNAME = genomekey_key
