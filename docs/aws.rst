@@ -2,8 +2,8 @@ Amazon Web Services
 =======================
 
 
-Install StarCluster
-+++++++++++++++++++
+Install StarCluster and StarClusterExtensions
+++++++++++++++++++++++++++++++++++++++++++++++
 
 1) Create an aws private key (using starcluster or aws console) at save it somewhere like ~/.starcluster/your_key.rsa
 2) Install starcluster and starclusterextensions
@@ -14,11 +14,8 @@ Install StarCluster
 
     pip install starcluster StarClusterExtensions
 
-    starcluster help # select option to create default config in ~/.starcluster
-
     # This is the default genomekey starcluster configuration
-    # Changing anything besides private key locations and AWS credentials is not recommended (unless you're an advanced user)
-    cp $GK_HOME/genomekey/etc/starcluster/config ~/.starcluster/config
+    cp ~projects/genomekey/etc/starcluster/config ~/.starcluster/config
     # Edit ~/.starcluster/config and fill out necessary fields
 
 
