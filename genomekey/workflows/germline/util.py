@@ -1,8 +1,6 @@
 import csv
 import os
 
-from cosmos import Input
-from genomekey.workflows.tools import bed
 import subprocess as sp
 
 __author__ = 'erik'
