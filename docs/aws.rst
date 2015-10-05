@@ -6,12 +6,12 @@ Install StarCluster and StarClusterExtensions
 ++++++++++++++++++++++++++++++++++++++++++++++
 
 1) Create an aws private key (using starcluster or aws console) at save it somewhere like ~/.starcluster/your_key.rsa
-2) Install starcluster and starclusterextensions
+2) Install starcluster and starclusterextensions and the awscli
+3) Launch the cluster!
 
 .. code-block:: bash
 
-    source ~/projects/GenomeKey/ve/bin/activate
-
+    # source ve/bin/activate
     pip install starcluster StarClusterExtensions
 
     # This is the default genomekey starcluster configuration
@@ -49,6 +49,18 @@ Alternatively, use the elastic load balancer (not well tested)
 
 
 See the `StarCluster Docs <http://star.mit.edu/cluster/docs/latest/manual/>`_ for more information
+
+
+Run GenomeKey
++++++++++++++++
+
+.. code-block:: bash
+
+    cd /genomekey/share/opt/genomekey/$VERSION
+    source ve/bin/activate
+    genomekey -h
+
+
 
 
 

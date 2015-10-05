@@ -3,6 +3,8 @@
 Install GenomeKey
 ======================
 
+**You can skip this if you are using AWS and StarClusterExtensions, as GenomeKey will already be installed on the AMI.**
+
 .. code-block:: bash
 
     apt-get install awscli # or brew install awscli
