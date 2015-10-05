@@ -28,7 +28,7 @@ disable_queue = True # necessary to customize sge options, it is re-enabled by t
 
 # note the order of plugins matters
 # genomekey needs to be before sge for multiple reasons. For example /scratch must be setup, and genomekey-share must be synced
-PLUGINS = createusers, genomekey, gluster, sge, sge_plus
+PLUGINS = createusers, gluster, genomekey, sge, sge_plus
 PERMISSIONS = ssh, http2, ipython_notebook, ganglia
 SPOT_BID = 0.70
 #USERDATA_SCRIPTS = /path/to/script1, /path/to/script2
