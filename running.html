@@ -139,11 +139,11 @@ John_Smith      <span class="m">2</span>       <span class="m">1</span>       LB
 <h2>3.1. Test Workflows<a class="headerlink" href="#test-workflows" title="Permalink to this headline">¶</a></h2>
 <p>Here are some example datasets to test.</p>
 <div class="highlight-bash"><div class="highlight"><pre><span class="c"># A single gene</span>
-genomekey -d germline -n <span class="s1">&#39;BRCA_s3fs&#39;</span> /genomekey/share/test/brca/input_s3.tsv --target_bed /genomekey/share/test/brca/targets.bed -ry
+genomekey -d germline -n <span class="s1">&#39;BRCA_s3fs&#39;</span> /genomekey/share/test/brca/input_s3.tsv --target_bed /genomekey/share/test/brca/targets.bed
 
 <span class="c"># A gene panel</span>
 <span class="nb">cd</span> /mnt/genomekey/share/test/1000g
-genomekey germline -n <span class="s1">&#39;Test_Exon_s3fs&#39;</span> /genomekey/share/test/1000g/exons.tsv  -t /genomekey/share/test/1000g/P3_consensus_exonic_targets.bed --s3fs s3://genomekey-out -ry
+genomekey germline -n <span class="s1">&#39;Test_Exon_s3fs&#39;</span> /genomekey/share/test/1000g/exons.tsv  -t /genomekey/share/test/1000g/P3_consensus_exonic_targets.bed
 
 <span class="c"># Two Exomes</span>
 </pre></div>
