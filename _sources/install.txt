@@ -3,7 +3,11 @@
 Install GenomeKey
 ======================
 
+**You can skip this if you are using AWS and StarClusterExtensions, as GenomeKey will already be installed on the AMI.**
+
 .. code-block:: bash
+
+    apt-get install awscli # or brew install awscli
 
     pip install virtualenv --user
     mkdir -p ~/projects
@@ -21,5 +25,6 @@ Install GenomeKey
     genomekey -h
     # Copy and edit config file as instructed
 
-    genomekey initdb
+
+
 

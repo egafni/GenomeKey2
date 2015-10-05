@@ -74,14 +74,16 @@
               <ul class="current">
 <li class="toctree-l1"><a class="reference internal" href="install.html">1. Install GenomeKey</a></li>
 <li class="toctree-l1 current"><a class="current reference internal" href="">2. Amazon Web Services</a><ul>
-<li class="toctree-l2"><a class="reference internal" href="#install-starcluster">2.1. Install StarCluster</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#install-starcluster-and-starclusterextensions">2.1. Install StarCluster and StarClusterExtensions</a></li>
 <li class="toctree-l2"><a class="reference internal" href="#launch-cluster">2.2. Launch Cluster</a></li>
-<li class="toctree-l2"><a class="reference internal" href="#advanced-manually-using-fabric-deploy-script">2.3. (Advanced) Manually using Fabric Deploy Script</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#run-genomekey">2.3. Run GenomeKey</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#advanced-manually-using-fabric-deploy-script">2.4. (Advanced) Manually using Fabric Deploy Script</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#advanced-creating-a-custom-ami">2.5. (Advanced) Creating a custom AMI</a></li>
 </ul>
 </li>
-<li class="toctree-l1"><a class="reference internal" href="running.html">3. Running GenomeKey</a></li>
-<li class="toctree-l1"><a class="reference internal" href="running.html#test-workflows">4. Test Workflows</a><ul>
-<li class="toctree-l2"><a class="reference internal" href="running.html#web-interface">4.1. Web Interface</a></li>
+<li class="toctree-l1"><a class="reference internal" href="running.html">3. Running GenomeKey</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="running.html#test-workflows">3.1. Test Workflows</a></li>
+<li class="toctree-l2"><a class="reference internal" href="running.html#web-dashboard">3.2. Web Dashboard</a></li>
 </ul>
 </li>
 </ul>
@@ -123,32 +125,33 @@
             
   <div class="section" id="amazon-web-services">
 <h1>2. Amazon Web Services<a class="headerlink" href="#amazon-web-services" title="Permalink to this headline">¶</a></h1>
-<div class="section" id="install-starcluster">
-<h2>2.1. Install StarCluster<a class="headerlink" href="#install-starcluster" title="Permalink to this headline">¶</a></h2>
-<div class="highlight-bash"><div class="highlight"><pre><span class="nb">source</span> ~/projects/GenomeKey/ve/bin/activate
-<span class="nb">export </span><span class="nv">GK_HOME</span><span class="o">=</span>/home/egafni/projects/GenomeKey
-
-pip install starcluster
-
-starcluster <span class="nb">help</span> <span class="c"># select option to create default config in ~/.starcluster</span>
+<div class="section" id="install-starcluster-and-starclusterextensions">
+<h2>2.1. Install StarCluster and StarClusterExtensions<a class="headerlink" href="#install-starcluster-and-starclusterextensions" title="Permalink to this headline">¶</a></h2>
+<ol class="arabic simple">
+<li>Create an aws private key (using starcluster or aws console) at save it somewhere like ~/.starcluster/your_key.rsa</li>
+<li>Install starcluster and starclusterextensions and the awscli</li>
+<li>Launch the cluster!</li>
+</ol>
+<div class="highlight-bash"><div class="highlight"><pre><span class="c"># source ve/bin/activate</span>
+pip install starcluster StarClusterExtensions
 
 <span class="c"># This is the default genomekey starcluster configuration</span>
-<span class="c"># Changing anything besides private key locations and AWS credentials is not recommended (unless you&#39;re an advanced user)</span>
-cp <span class="nv">$GK_HOME</span>/genomekey/aws/starcluster/config ~/.starcluster/config
-cp <span class="nv">$GK_HOME</span>/genomekey/aws/starcluster/aws_credentials ~/.starcluster/aws_credentials
-<span class="c"># Be sure to edit ~/.starcluster/aws_credentials</span>
+cp ~projects/genomekey/etc/starcluster/config ~/.starcluster/config
+<span class="c"># Edit ~/.starcluster/config and fill out necessary fields</span>
+
+
+<span class="c"># install the aws cli, and configure it as well (you have to store your AWS credentials in two places)</span>
+<span class="c"># this configuration file will be pushed to the starcluster clusters so that genomekey can use aws</span>
+<span class="c"># TODO just infer awscli config from starcluster config</span>
+brew install awscli <span class="c"># or sudo apt-get install awscli</span>
+aws configure
 </pre></div>
 </div>
-<ol class="arabic simple">
-<li>edit aws file with AWS credentials</li>
-<li>Make/place aws private key (using starcluster or aws console) in ~/.starcluster/your_key.rsa</li>
-<li>make sure KEYNAME in ~/.starcluster/config is set to your keyname</li>
-</ol>
 </div>
 <div class="section" id="launch-cluster">
 <h2>2.2. Launch Cluster<a class="headerlink" href="#launch-cluster" title="Permalink to this headline">¶</a></h2>
-<p>This will launch a single master node.</p>
-<div class="highlight-bash"><div class="highlight"><pre>starcluster start gk
+<p>This will launch a single master node (reserved instance), and one execution node (spot instance)</p>
+<div class="highlight-bash"><div class="highlight"><pre>starcluster start gk -s 2
 </pre></div>
 </div>
 <p>Adding nodes (StarCluster has been configured to request spot instances by default)</p>
@@ -161,8 +164,16 @@ cp <span class="nv">$GK_HOME</span>/genomekey/aws/starcluster/aws_credentials ~/
 </div>
 <p>See the <a class="reference external" href="http://star.mit.edu/cluster/docs/latest/manual/">StarCluster Docs</a> for more information</p>
 </div>
+<div class="section" id="run-genomekey">
+<h2>2.3. Run GenomeKey<a class="headerlink" href="#run-genomekey" title="Permalink to this headline">¶</a></h2>
+<div class="highlight-bash"><div class="highlight"><pre><span class="nb">cd</span> /genomekey/share/opt/genomekey/<span class="nv">$VERSION</span>
+<span class="nb">source </span>ve/bin/activate
+genomekey -h
+</pre></div>
+</div>
+</div>
 <div class="section" id="advanced-manually-using-fabric-deploy-script">
-<h2>2.3. (Advanced) Manually using Fabric Deploy Script<a class="headerlink" href="#advanced-manually-using-fabric-deploy-script" title="Permalink to this headline">¶</a></h2>
+<h2>2.4. (Advanced) Manually using Fabric Deploy Script<a class="headerlink" href="#advanced-manually-using-fabric-deploy-script" title="Permalink to this headline">¶</a></h2>
 <p>Normally these deployment scripts are executed by the StarCluster GenomeKey plugin automatically, and this isn&#8217;t necessary.
 Advanced users will want to look through the genomekey_deploy/fab scripts to see the code behind the deployment
 steps.</p>
@@ -171,6 +182,19 @@ steps.</p>
 fab -f aws.py <span class="nb">command</span> -H <span class="nv">$CLUSTER_HOST</span> -i <span class="nv">$CLUSTER_KEY</span>
 </pre></div>
 </div>
+</div>
+<div class="section" id="advanced-creating-a-custom-ami">
+<h2>2.5. (Advanced) Creating a custom AMI<a class="headerlink" href="#advanced-creating-a-custom-ami" title="Permalink to this headline">¶</a></h2>
+<p>A custom StarCluster AMI was created to speed up deployment.</p>
+<blockquote>
+<div><ul class="simple">
+<li>apt-update</li>
+<li>Install oracle Java</li>
+<li>Increase EBS root volume size (Must be done by first using &#8220;starcluster ebsimage&#8221;, then in console, create a second image and specify root ebs size).</li>
+<li>Download GATK bundle to root ebs drive</li>
+<li>Create the final ebs image (&#8220;starcluster ebsimage&#8221;)</li>
+</ul>
+</div></blockquote>
 </div>
 </div>
 

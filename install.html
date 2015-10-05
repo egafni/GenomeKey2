@@ -74,14 +74,16 @@
               <ul class="current">
 <li class="toctree-l1 current"><a class="current reference internal" href="">1. Install GenomeKey</a></li>
 <li class="toctree-l1"><a class="reference internal" href="aws.html">2. Amazon Web Services</a><ul>
-<li class="toctree-l2"><a class="reference internal" href="aws.html#install-starcluster">2.1. Install StarCluster</a></li>
+<li class="toctree-l2"><a class="reference internal" href="aws.html#install-starcluster-and-starclusterextensions">2.1. Install StarCluster and StarClusterExtensions</a></li>
 <li class="toctree-l2"><a class="reference internal" href="aws.html#launch-cluster">2.2. Launch Cluster</a></li>
-<li class="toctree-l2"><a class="reference internal" href="aws.html#advanced-manually-using-fabric-deploy-script">2.3. (Advanced) Manually using Fabric Deploy Script</a></li>
+<li class="toctree-l2"><a class="reference internal" href="aws.html#run-genomekey">2.3. Run GenomeKey</a></li>
+<li class="toctree-l2"><a class="reference internal" href="aws.html#advanced-manually-using-fabric-deploy-script">2.4. (Advanced) Manually using Fabric Deploy Script</a></li>
+<li class="toctree-l2"><a class="reference internal" href="aws.html#advanced-creating-a-custom-ami">2.5. (Advanced) Creating a custom AMI</a></li>
 </ul>
 </li>
-<li class="toctree-l1"><a class="reference internal" href="running.html">3. Running GenomeKey</a></li>
-<li class="toctree-l1"><a class="reference internal" href="running.html#test-workflows">4. Test Workflows</a><ul>
-<li class="toctree-l2"><a class="reference internal" href="running.html#web-interface">4.1. Web Interface</a></li>
+<li class="toctree-l1"><a class="reference internal" href="running.html">3. Running GenomeKey</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="running.html#test-workflows">3.1. Test Workflows</a></li>
+<li class="toctree-l2"><a class="reference internal" href="running.html#web-dashboard">3.2. Web Dashboard</a></li>
 </ul>
 </li>
 </ul>
@@ -123,7 +125,10 @@
             
   <div class="section" id="install-genomekey">
 <span id="install"></span><h1>1. Install GenomeKey<a class="headerlink" href="#install-genomekey" title="Permalink to this headline">¶</a></h1>
-<div class="highlight-bash"><div class="highlight"><pre>pip install virtualenv --user
+<p><strong>You can skip this if you are using AWS and StarClusterExtensions, as GenomeKey will already be installed on the AMI.</strong></p>
+<div class="highlight-bash"><div class="highlight"><pre>apt-get install awscli <span class="c"># or brew install awscli</span>
+
+pip install virtualenv --user
 mkdir -p ~/projects
 <span class="nb">cd</span> ~/projects
 git clone git@github.com:EnterpriseGenomics/GenomeKey.git GenomeKey
@@ -138,8 +143,6 @@ aws configure <span class="c"># probably want to set default region is us-west-2
 
 genomekey -h
 <span class="c"># Copy and edit config file as instructed</span>
-
-genomekey initdb
 </pre></div>
 </div>
 </div>

@@ -2,38 +2,38 @@ Amazon Web Services
 =======================
 
 
-Install StarCluster
-+++++++++++++++++++
+Install StarCluster and StarClusterExtensions
+++++++++++++++++++++++++++++++++++++++++++++++
+
+1) Create an aws private key (using starcluster or aws console) at save it somewhere like ~/.starcluster/your_key.rsa
+2) Install starcluster and starclusterextensions and the awscli
+3) Launch the cluster!
 
 .. code-block:: bash
 
-    source ~/projects/GenomeKey/ve/bin/activate
-    export GK_HOME=/home/egafni/projects/GenomeKey
-
-    pip install starcluster
-
-    starcluster help # select option to create default config in ~/.starcluster
+    # source ve/bin/activate
+    pip install starcluster StarClusterExtensions
 
     # This is the default genomekey starcluster configuration
-    # Changing anything besides private key locations and AWS credentials is not recommended (unless you're an advanced user)
-    cp $GK_HOME/genomekey/aws/starcluster/config ~/.starcluster/config
-    cp $GK_HOME/genomekey/aws/starcluster/aws_credentials ~/.starcluster/aws_credentials
-    # Be sure to edit ~/.starcluster/aws_credentials
+    cp ~projects/genomekey/etc/starcluster/config ~/.starcluster/config
+    # Edit ~/.starcluster/config and fill out necessary fields
 
 
-1) edit aws file with AWS credentials
-2) Make/place aws private key (using starcluster or aws console) in ~/.starcluster/your_key.rsa
-3) make sure KEYNAME in ~/.starcluster/config is set to your keyname
+    # install the aws cli, and configure it as well (you have to store your AWS credentials in two places)
+    # this configuration file will be pushed to the starcluster clusters so that genomekey can use aws
+    # TODO just infer awscli config from starcluster config
+    brew install awscli # or sudo apt-get install awscli
+    aws configure
 
 
 Launch Cluster
 +++++++++++++++++++
 
-This will launch a single master node.
+This will launch a single master node (reserved instance), and one execution node (spot instance)
 
 .. code-block:: bash
 
-    starcluster start gk
+    starcluster start gk -s 2
 
 Adding nodes (StarCluster has been configured to request spot instances by default)
 
@@ -49,6 +49,18 @@ Alternatively, use the elastic load balancer (not well tested)
 
 
 See the `StarCluster Docs <http://star.mit.edu/cluster/docs/latest/manual/>`_ for more information
+
+
+Run GenomeKey
++++++++++++++++
+
+.. code-block:: bash
+
+    cd /genomekey/share/opt/genomekey/$VERSION
+    source ve/bin/activate
+    genomekey -h
+
+
 
 
 
@@ -68,3 +80,13 @@ steps.
 
 
 
+(Advanced) Creating a custom AMI
+++++++++++++++++++++++++++++++++++
+
+A custom StarCluster AMI was created to speed up deployment.
+
+  * apt-update
+  * Install oracle Java
+  * Increase EBS root volume size (Must be done by first using "starcluster ebsimage", then in console, create a second image and specify root ebs size).
+  * Download GATK bundle to root ebs drive
+  * Create the final ebs image ("starcluster ebsimage")
