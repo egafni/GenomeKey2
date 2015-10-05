@@ -3,7 +3,7 @@ import argparse
 import os
 import sys
 
-from cosmos import add_execution_args, Execution
+from cosmos.api import add_execution_args, Execution
 from genomekey.workflows.germline.recipe import run_germline
 from genomekey.util.misc import assert_references_exist
 from genomekey.api import GenomeKey, settings as s, library_path, s3run, s3cmd
