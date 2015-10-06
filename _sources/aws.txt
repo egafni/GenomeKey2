@@ -11,14 +11,14 @@ Install StarCluster and StarClusterExtensions
 
 .. code-block:: bash
 
-    cd projects
+    cd ~/projects
     git clone git@github.com:egafni/StarClusterExtensions.git
     cd StarClusterExtensions
     virtualenv ve
     source ve/bin/activate
 
     # This is the default genomekey starcluster configuration
-    cp ~etc/config ~/.starcluster/config
+    cp etc/config ~/.starcluster/config
     # Edit ~/.starcluster/config and fill out necessary fields
 
 
@@ -58,6 +58,10 @@ Run GenomeKey
 +++++++++++++++
 
 .. code-block:: bash
+
+    starcluster sshmaster gk
+    su genomekey
+    # tmux is highly recommended here
 
     cd /genomekey/share/opt/genomekey/$VERSION
     source ve/bin/activate

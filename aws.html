@@ -132,14 +132,14 @@
 <li>Install starcluster and starclusterextensions and the awscli</li>
 <li>Launch the cluster!</li>
 </ol>
-<div class="highlight-bash"><div class="highlight"><pre><span class="nb">cd </span>projects
+<div class="highlight-bash"><div class="highlight"><pre><span class="nb">cd</span> ~/projects
 git clone git@github.com:egafni/StarClusterExtensions.git
 <span class="nb">cd </span>StarClusterExtensions
 virtualenv ve
 <span class="nb">source </span>ve/bin/activate
 
 <span class="c"># This is the default genomekey starcluster configuration</span>
-cp ~etc/config ~/.starcluster/config
+cp etc/config ~/.starcluster/config
 <span class="c"># Edit ~/.starcluster/config and fill out necessary fields</span>
 
 
@@ -169,7 +169,11 @@ aws configure
 </div>
 <div class="section" id="run-genomekey">
 <h2>2.3. Run GenomeKey<a class="headerlink" href="#run-genomekey" title="Permalink to this headline">¶</a></h2>
-<div class="highlight-bash"><div class="highlight"><pre><span class="nb">cd</span> /genomekey/share/opt/genomekey/<span class="nv">$VERSION</span>
+<div class="highlight-bash"><div class="highlight"><pre>starcluster sshmaster gk
+su genomekey
+<span class="c"># tmux is highly recommended here</span>
+
+<span class="nb">cd</span> /genomekey/share/opt/genomekey/<span class="nv">$VERSION</span>
 <span class="nb">source </span>ve/bin/activate
 genomekey -h
 </pre></div>
