@@ -132,11 +132,14 @@
 <li>Install starcluster and starclusterextensions and the awscli</li>
 <li>Launch the cluster!</li>
 </ol>
-<div class="highlight-bash"><div class="highlight"><pre><span class="c"># source ve/bin/activate</span>
-pip install starcluster StarClusterExtensions
+<div class="highlight-bash"><div class="highlight"><pre><span class="nb">cd </span>projects
+git clone git@github.com:egafni/StarClusterExtensions.git
+<span class="nb">cd </span>StarClusterExtensions
+virtualenv ve
+<span class="nb">source </span>ve/bin/activate
 
 <span class="c"># This is the default genomekey starcluster configuration</span>
-cp ~projects/genomekey/etc/starcluster/config ~/.starcluster/config
+cp ~etc/config ~/.starcluster/config
 <span class="c"># Edit ~/.starcluster/config and fill out necessary fields</span>
 
 
@@ -178,7 +181,7 @@ genomekey -h
 Advanced users will want to look through the genomekey_deploy/fab scripts to see the code behind the deployment
 steps.</p>
 <div class="highlight-bash"><div class="highlight"><pre><span class="c"># starcluster listclusters to get the list of clusters</span>
-<span class="nb">cd </span>genomekey_deploy/fab
+<span class="nb">cd </span>StarClusterExtensions/sce/genomekey/fab
 fab -f aws.py <span class="nb">command</span> -H <span class="nv">$CLUSTER_HOST</span> -i <span class="nv">$CLUSTER_KEY</span>
 </pre></div>
 </div>

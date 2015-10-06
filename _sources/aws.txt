@@ -11,11 +11,14 @@ Install StarCluster and StarClusterExtensions
 
 .. code-block:: bash
 
-    # source ve/bin/activate
-    pip install starcluster StarClusterExtensions
+    cd projects
+    git clone git@github.com:egafni/StarClusterExtensions.git
+    cd StarClusterExtensions
+    virtualenv ve
+    source ve/bin/activate
 
     # This is the default genomekey starcluster configuration
-    cp ~projects/genomekey/etc/starcluster/config ~/.starcluster/config
+    cp ~etc/config ~/.starcluster/config
     # Edit ~/.starcluster/config and fill out necessary fields
 
 
@@ -62,9 +65,6 @@ Run GenomeKey
 
 
 
-
-
-
 (Advanced) Manually using Fabric Deploy Script
 ++++++++++++++++++++++++++++++++++++++++++++++++
 
@@ -75,7 +75,7 @@ steps.
 .. code-block:: bash
 
     # starcluster listclusters to get the list of clusters
-    cd genomekey_deploy/fab
+    cd StarClusterExtensions/sce/genomekey/fab
     fab -f aws.py command -H $CLUSTER_HOST -i $CLUSTER_KEY
 
 
