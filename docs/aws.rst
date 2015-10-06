@@ -19,6 +19,7 @@ Install StarCluster and StarClusterExtensions
     source ve/bin/activate
 
     # This is the default genomekey starcluster configuration
+    mkdir -p ~/.starcluster
     cp etc/config ~/.starcluster/config
     # Edit ~/.starcluster/config and fill out necessary fields
 
