@@ -1,5 +1,5 @@
 [global]
-INCLUDE=~/projects/StarClusterExtensions/sce/plugins/genomekey/etc/starcluster/base_config
+INCLUDE=~/projects/GenomeKey/genomekey/etc/starcluster/base_config
 
 # AWS
 

@@ -62,9 +62,6 @@ Run GenomeKey
 
 
 
-
-
-
 (Advanced) Manually using Fabric Deploy Script
 ++++++++++++++++++++++++++++++++++++++++++++++++
 
@@ -75,7 +72,7 @@ steps.
 .. code-block:: bash
 
     # starcluster listclusters to get the list of clusters
-    cd genomekey_deploy/fab
+    cd StarClusterExtensions/sce/genomekey/fab
     fab -f aws.py command -H $CLUSTER_HOST -i $CLUSTER_KEY
 
 
