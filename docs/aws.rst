@@ -6,16 +6,20 @@ Install StarCluster and StarClusterExtensions
 ++++++++++++++++++++++++++++++++++++++++++++++
 
 1) Create an aws private key (using starcluster or aws console) at save it somewhere like ~/.starcluster/your_key.rsa
-2) Install starcluster and starclusterextensions and the awscli
+2) Install starcluster, starclusterextensions ande awscli
+3) Configure starcluster and awscli
 3) Launch the cluster!
 
 .. code-block:: bash
 
-    # source ve/bin/activate
-    pip install starcluster StarClusterExtensions
+    cd ~/projects
+    git clone git@github.com:egafni/StarClusterExtensions.git
+    cd StarClusterExtensions
+    virtualenv ve
+    source ve/bin/activate
 
     # This is the default genomekey starcluster configuration
-    cp ~projects/genomekey/etc/starcluster/config ~/.starcluster/config
+    cp etc/config ~/.starcluster/config
     # Edit ~/.starcluster/config and fill out necessary fields
 
 
@@ -55,6 +59,10 @@ Run GenomeKey
 +++++++++++++++
 
 .. code-block:: bash
+
+    starcluster sshmaster gk
+    su genomekey
+    # tmux is highly recommended here
 
     cd /genomekey/share/opt/genomekey/$VERSION
     source ve/bin/activate
