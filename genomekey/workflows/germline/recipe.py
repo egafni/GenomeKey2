@@ -1,11 +1,13 @@
 from .util import parse_inputs
-from ...api import settings, make_s3_cmd_fxn_wrapper, s3cmd, s3run
+from genomekey.api import settings, make_s3_cmd_fxn_wrapper, s3cmd, s3run, shared_fs_cmd_fxn_wrapper
 
 from ..tools import bwa, picard, gatk, samtools, fastqc, bed, fastq
 from . import util
 from genomekey.bin.fastq.split_fastq_file import get_split_paths
+from genomekey.aws.s3 import cmd as s3cmd
 
-from cosmos.api import one2one, many2one, out_dir, group, load_input, Execution, make_dict
+
+from cosmos.api import one2one, many2one, out_dir, group, load_input, Execution, make_dict, bash_call
 import os
 import math
 
@@ -33,11 +35,10 @@ def run_germline(execution, target_bed, input_path=None, s3fs=None):
     cp_target_bed_task = execution.add_task(lambda drm='local', out_bed=out_dir('target.bed'): 'cp %s %s' % (target_bed, out_bed),
                                             out_dir='', stage_name='Copy_Target_Bed')
 
-    target_bed_tasks = [execution.add_task(bed.filter_bed_by_contig, dict(contig=contig), [cp_target_bed_task], 'tmp/contigs/{contig}')
+    target_bed_tasks = [execution.add_task(bed.filter_bed_by_contig, dict(contig=contig), [cp_target_bed_task], 'work/contigs/{contig}')
                         for contig in util.get_bed_contigs(target_bed)]
 
-    fastq_tasks = [execution.add_task(load_input, dict(in_file=fastq_path, **tags), stage_name='Load_Fastqs')
-                   for fastq_path, tags in parse_inputs(input_path)]
+    fastq_tasks = list(util.gen_fastq_tasks(execution, input_path))
 
     fastqc_tasks = many2one(fastqc.fastqc, fastq_tasks, ['sample_name', 'library'], out_dir='SM_{sample_name}/qc/LB_{library}')
 
@@ -45,7 +46,7 @@ def run_germline(execution, target_bed, input_path=None, s3fs=None):
     aligned_tasks = align(execution, fastq_tasks, target_bed_tasks)
     called_tasks = variant_call(execution, aligned_tasks, target_bed_tasks)
 
-    execution.run(cmd_wrapper=make_s3_cmd_fxn_wrapper(s3fs))
+    execution.run(cmd_wrapper=make_s3_cmd_fxn_wrapper(s3fs) if s3fs else shared_fs_cmd_fxn_wrapper)
 
     if execution.successful:
         execution.log.info('Final vcf: %s' % opj(s3fs if s3fs else execution.output_dir.output_dir,
@@ -85,8 +86,7 @@ def split_large_fastq_files(execution, fastq_tasks):
 
                 for out_fastq in split_task.output_files:
                     yield execution.add_task(load_input, make_dict(fastq_task.tags, in_file=out_fastq),
-                                             split_task,
-                                             stage_name='Load_Split_Fastq_Files'
+                                             split_task, stage_name='Load_Split_Fastq_Files'
                     )
 
             else:
@@ -125,7 +125,7 @@ def align(execution, fastq_tasks, target_bed_tasks):
                                     dict(contig=target_bed_task.tags['contig'],
                                          in_target_bed=target_bed_task.output_files[0], **tags),
                                     parents + [target_bed_task],
-                                    out_dir='work/SM_{sample_name}/contigs/{contig}')
+                                    out_dir='SM_{sample_name}/work/contigs/{contig}')
                  for tags, parents in group(dedupe, ['sample_name'])  # Many2one
                  for target_bed_task in target_bed_tasks]  # One2many
 

@@ -83,6 +83,9 @@ steps.
     # starcluster listclusters to get the list of clusters
     cd StarClusterExtensions/sce/genomekey/fab
     fab -f aws.py command -H $CLUSTER_HOST -i $CLUSTER_KEY
+    # example:
+    cd ~/projects/StarClusterExtensions/sce/plugins/genomekey/fab
+    fab -f gk.py copy_genomekey_dev_environ -H gk -i ~/.starcluster/ngx_keys/genomekey_key.rsa
 
 
 

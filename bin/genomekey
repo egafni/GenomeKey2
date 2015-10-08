@@ -84,7 +84,7 @@ def parse_args():
     sp.add_argument('input_path', help='file with inputs')
     sp.add_argument('--config_path', help='genomekey.conf')
     sp.add_argument('--s3fs', '-s3', default=False,
-                    help='upload/download all output files to this s3 bucket.  Removes the need'
+                    help='EXPERIMENTAL.  upload/download all output files to this s3 bucket.  Removes the need'
                          'for a shared filesystem')
     sp.add_argument('--target_bed', '-t', required=True)  # default to whole genome target bed?
     add_execution_args2(sp)
