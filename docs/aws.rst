@@ -19,6 +19,7 @@ Install StarCluster and StarClusterExtensions
     source ve/bin/activate
 
     # This is the default genomekey starcluster configuration
+    mkdir -p ~/.starcluster
     cp etc/config ~/.starcluster/config
     # Edit ~/.starcluster/config and fill out necessary fields
 
@@ -82,6 +83,9 @@ steps.
     # starcluster listclusters to get the list of clusters
     cd StarClusterExtensions/sce/genomekey/fab
     fab -f aws.py command -H $CLUSTER_HOST -i $CLUSTER_KEY
+    # example:
+    cd ~/projects/StarClusterExtensions/sce/plugins/genomekey/fab
+    fab -f gk.py copy_genomekey_dev_environ -H gk -i ~/.starcluster/ngx_keys/genomekey_key.rsa
 
 
 

@@ -3,7 +3,7 @@ import os
 library_path = os.path.dirname(os.path.realpath(__file__))
 opj = os.path.join
 
-settings = dict()
+settings = None
 
 
 def load_settings(conf_path=opj(library_path, 'etc/genomekey.conf')):

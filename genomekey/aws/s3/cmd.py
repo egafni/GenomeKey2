@@ -1,13 +1,14 @@
 import re
 import os
-from genomekey.api import settings
-opj = os.path.join
+from genomekey.configuration import settings
 
+opj = os.path.join
 
 
 def cp(from_, to, chrom=None, recursive=False, quiet=False, only_show_errors=True):
     # todo try switching to gof3r, may be much faster
     if chrom and from_.startswith('s3://') and from_.endswith('.bam'):
+        # slice the chrom!
         dirname = os.path.dirname(to)
         return 'mkdir -p {dirname} && ' \
                '{s[opt][samtools]} view -hb {from_} {chrom}: > {to} && ' \
@@ -50,7 +51,7 @@ def stream_out(path):
 # """
 #
 # def g():
-#         for path in input_file_paths:
+# for path in input_file_paths:
 #             yield cp(opj(s3_root, path), path)
 #
 #     return "\n".join(g())
