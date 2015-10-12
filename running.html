@@ -44,17 +44,27 @@
 
     
     <nav data-toggle="wy-nav-shift" class="wy-nav-side">
-      <div class="wy-side-nav-search">
-        
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search">
+          
 
-        
-          <a href="index.html" class="icon icon-home"> GenomeKey
-        
+          
+            <a href="index.html" class="icon icon-home"> GenomeKey
+          
 
-        
-        </a>
+          
+          </a>
 
-        
+          
+            
+            
+              <div class="version">
+                0.0.1
+              </div>
+            
+          
+
+          
 <div role="search">
   <form id="rtd-search-form" class="wy-form" action="search.html" method="get">
     <input type="text" name="q" placeholder="Search docs" />
@@ -63,23 +73,16 @@
   </form>
 </div>
 
-        
-      </div>
+          
+        </div>
 
-      <div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="main navigation">
-        
+        <div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="main navigation">
           
-          
-              <ul class="current">
+            
+            
+                <ul class="current">
 <li class="toctree-l1"><a class="reference internal" href="install.html">1. Install GenomeKey</a></li>
-<li class="toctree-l1"><a class="reference internal" href="aws.html">2. Amazon Web Services</a><ul>
-<li class="toctree-l2"><a class="reference internal" href="aws.html#install-starcluster-and-starclusterextensions">2.1. Install StarCluster and StarClusterExtensions</a></li>
-<li class="toctree-l2"><a class="reference internal" href="aws.html#launch-cluster">2.2. Launch Cluster</a></li>
-<li class="toctree-l2"><a class="reference internal" href="aws.html#run-genomekey">2.3. Run GenomeKey</a></li>
-<li class="toctree-l2"><a class="reference internal" href="aws.html#advanced-manually-using-fabric-deploy-script">2.4. (Advanced) Manually using Fabric Deploy Script</a></li>
-<li class="toctree-l2"><a class="reference internal" href="aws.html#advanced-creating-a-custom-ami">2.5. (Advanced) Creating a custom AMI</a></li>
-</ul>
-</li>
+<li class="toctree-l1"><a class="reference internal" href="aws.html">2. Amazon Web Services</a></li>
 <li class="toctree-l1 current"><a class="current reference internal" href="">3. Running GenomeKey</a><ul>
 <li class="toctree-l2"><a class="reference internal" href="#test-workflows">3.1. Test Workflows</a></li>
 <li class="toctree-l2"><a class="reference internal" href="#web-dashboard">3.2. Web Dashboard</a></li>
@@ -87,10 +90,10 @@
 </li>
 </ul>
 
+            
           
-        
+        </div>
       </div>
-      &nbsp;
     </nav>
 
     <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap">
@@ -105,7 +108,13 @@
       
       <div class="wy-nav-content">
         <div class="rst-content">
-          <div role="navigation" aria-label="breadcrumbs navigation">
+          
+
+
+
+
+
+<div role="navigation" aria-label="breadcrumbs navigation">
   <ul class="wy-breadcrumbs">
     <li><a href="index.html">Docs</a> &raquo;</li>
       
@@ -120,7 +129,8 @@
   </ul>
   <hr/>
 </div>
-          <div role="main" class="document">
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
             
   <div class="section" id="running-genomekey">
 <span id="running"></span><h1>3. Running GenomeKey<a class="headerlink" href="#running-genomekey" title="Permalink to this headline">¶</a></h1>
@@ -139,11 +149,11 @@ John_Smith      <span class="m">2</span>       <span class="m">1</span>       LB
 <h2>3.1. Test Workflows<a class="headerlink" href="#test-workflows" title="Permalink to this headline">¶</a></h2>
 <p>Here are some example datasets to test.</p>
 <div class="highlight-bash"><div class="highlight"><pre><span class="c"># A single gene</span>
-genomekey -d germline -n <span class="s1">&#39;BRCA_s3fs&#39;</span> /genomekey/share/test/brca/input_s3.tsv --target_bed /genomekey/share/test/brca/targets.bed
+genomekey -d germline -n <span class="s1">&#39;Test_BRCAo&#39;</span> /genomekey/share/test/brca/input_s3.tsv --target_bed /genomekey/share/test/brca/targets.bed
 
 <span class="c"># A gene panel</span>
 <span class="nb">cd</span> /mnt/genomekey/share/test/1000g
-genomekey germline -n <span class="s1">&#39;Test_Exon_s3fs&#39;</span> /genomekey/share/test/1000g/exons.tsv  -t /genomekey/share/test/1000g/P3_consensus_exonic_targets.bed
+genomekey germline -n <span class="s1">&#39;Test_Exon&#39;</span> /genomekey/share/test/1000g/exons.tsv  -t /genomekey/share/test/1000g/P3_consensus_exonic_targets.bed
 
 <span class="c"># Two Exomes</span>
 </pre></div>
@@ -162,6 +172,7 @@ gunicorn genomekey.web.gunicorn:flask -b 0.0.0.0:5000
 </div>
 
 
+           </div>
           </div>
           <footer>
   
@@ -178,9 +189,10 @@ gunicorn genomekey.web.gunicorn:flask -b 0.0.0.0:5000
   <div role="contentinfo">
     <p>
         &copy; Copyright 2015, Erik Gafni.
+
     </p>
   </div>
-  Built with <a href="http://sphinx-doc.org/">Sphinx</a> using a <a href="https://github.com/snide/sphinx_rtd_theme">theme</a> provided by <a href="https://readthedocs.org">Read the Docs</a>.
+  Built with <a href="http://sphinx-doc.org/">Sphinx</a> using a <a href="https://github.com/snide/sphinx_rtd_theme">theme</a> provided by <a href="https://readthedocs.org">Read the Docs</a>. 
 
 </footer>
 
