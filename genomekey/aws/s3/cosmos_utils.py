@@ -68,7 +68,7 @@ def shared_fs_cmd_fxn_wrapper(task, stage_name, input_map, output_map):
             if value.startswith('s3://'):
                 return s3cmd.stream_in(value)
             else:
-                return '<(%s)' % value
+                return '<(cat %s)' % value
 
         # def to_pull(value):
         #     if value.startswith('s3://'):

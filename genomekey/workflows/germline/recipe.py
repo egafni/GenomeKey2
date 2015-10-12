@@ -8,6 +8,7 @@ from genomekey.aws.s3 import cmd as s3cmd
 
 
 from cosmos.api import one2one, many2one, out_dir, group, load_input, Execution, make_dict, bash_call
+from cosmos.core.cmd_fxn.signature import default_cmd_fxn_wrapper
 import os
 import math
 
@@ -46,7 +47,7 @@ def run_germline(execution, target_bed, input_path=None, s3fs=None):
     aligned_tasks = align(execution, fastq_tasks, target_bed_tasks)
     called_tasks = variant_call(execution, aligned_tasks, target_bed_tasks)
 
-    execution.run(cmd_wrapper=make_s3_cmd_fxn_wrapper(s3fs) if s3fs else shared_fs_cmd_fxn_wrapper)
+    execution.run(cmd_wrapper=make_s3_cmd_fxn_wrapper(s3fs) if s3fs else default_cmd_fxn_wrapper)
 
     if execution.successful:
         execution.log.info('Final vcf: %s' % opj(s3fs if s3fs else execution.output_dir.output_dir,
