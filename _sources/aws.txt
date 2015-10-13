@@ -12,19 +12,21 @@ Install StarCluster and StarClusterExtensions
 
 .. code-block:: bash
 
+    # Clone Repositories
     cd ~/projects
-    git clone git@github.com:egafni/StarClusterExtensions.git
-    git clone git@github.com:egafni/StarCluster.git
-    cd StarCluster
-    git checkout genomekey
+    git clone -b master git@github.com:egafni/StarClusterExtensions.git
+    git clone -b genomekey git@github.com:egafni/StarCluster.git  # unfortunately I had to fork StarCluster
 
+    # Also clone Cosmos/GenomeKey. They will get rsynced to the cluster by StarClusterExtensions
+    git clone -b master git@github.com:LPM-HMS/COSMOS-2.0.git Cosmos
+    git clone -b master git@github.com:EnterpriseGenomics/GenomeKey.git
 
+    # Create a virtual environment for StarCluster and StarClusterExtensions
     cd ~/projects/StarClusterExtensions
     virtualenv ve
     source ve/bin/activate
 
     pip install ~/projects/StarCluster ~/projects/StarClusterExtensions
-
 
     # This is the default genomekey starcluster configuration
     mkdir -p ~/.starcluster
@@ -32,9 +34,8 @@ Install StarCluster and StarClusterExtensions
     # Edit ~/.starcluster/config and fill out necessary fields
 
 
-    # install the aws cli, and configure it as well (you have to store your AWS credentials in two places)
-    # this configuration file will be pushed to the starcluster clusters so that genomekey can use aws
-    # TODO just infer awscli config from starcluster config
+    # install the aws cli, and configure it (you have to store your AWS credentials in two places, StarCluster's config and aws cli's config)
+    # this configuration file will be pushed to the starcluster clusters so that genomekey can use aws as well
     brew install awscli # or sudo apt-get install awscli
     aws configure
 
