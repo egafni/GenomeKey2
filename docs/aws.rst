@@ -12,6 +12,7 @@ Install StarCluster and StarClusterExtensions
 
 .. code-block:: bash
 
+    # Clone repos
     cd ~/projects
     git clone git@github.com:egafni/StarClusterExtensions.git
     git clone git@github.com:egafni/StarCluster.git
@@ -20,13 +21,12 @@ Install StarCluster and StarClusterExtensions
     cd StarCluster
     git checkout genomekey
 
-
+    # Create a virtual environment for StarCluster and StarClusterExtensions
     cd ~/projects/StarClusterExtensions
     virtualenv ve
     source ve/bin/activate
 
     pip install ~/projects/StarCluster ~/projects/StarClusterExtensions
-
 
     # This is the default genomekey starcluster configuration
     mkdir -p ~/.starcluster
