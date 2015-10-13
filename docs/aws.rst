@@ -15,6 +15,8 @@ Install StarCluster and StarClusterExtensions
     cd ~/projects
     git clone git@github.com:egafni/StarClusterExtensions.git
     git clone git@github.com:egafni/StarCluster.git
+    git clone git@github.com:LPM-HMS/COSMOS-2.0.git
+    git clone git@github.com:EnterpriseGenomics/GenomeKey.git
     cd StarCluster
     git checkout genomekey
 
