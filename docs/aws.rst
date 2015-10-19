@@ -13,25 +13,22 @@ Install StarCluster and StarClusterExtensions
 .. code-block:: bash
 
     # Clone repos
-    cd ~/projects
-    git clone git@github.com:egafni/StarClusterExtensions.git
-    git clone git@github.com:egafni/StarCluster.git
-    git clone git@github.com:LPM-HMS/COSMOS-2.0.git
-    git clone git@github.com:EnterpriseGenomics/GenomeKey.git
-    cd StarCluster
-    git checkout genomekey
+    cd ~/GenomeKeyDeploy/$VERSION
+    git clone -b master https://github.com/egafni/StarClusterExtensions.git
+    git clone -b genomekey https://github.com/egafni/StarCluster.git
+    git clone -b master https://github.com/LPM-HMS/COSMOS-2.0.git Cosmos
+    git clone -b master https://github.com/LPM-HMS/GenomeKey2.git GenomeKey
 
     # Create a virtual environment for StarCluster and StarClusterExtensions
-    cd ~/projects/StarClusterExtensions
     virtualenv ve
     source ve/bin/activate
 
-    pip install ~/projects/StarCluster ~/projects/StarClusterExtensions
+    pip install StarCluster/ StarClusterExtensions/
 
-    # This is the default genomekey starcluster configuration
-    mkdir -p ~/.starcluster
-    cp etc/config ~/.starcluster/config
-    # Edit ~/.starcluster/config and fill out necessary fields
+    mkdir etc/
+    cp StarClusterExtensions/etc/config etc/starcluster.config
+    # Edit etc/starcluster.config and fill out necessary fields
+
 
 
     # install the aws cli, and configure it as well (you have to store your AWS credentials in two places)
@@ -44,11 +41,13 @@ Install StarCluster and StarClusterExtensions
 Launch Cluster
 +++++++++++++++++++
 
-This will launch a single master node (reserved instance), and one execution node (spot instance)
+This will launch a single master node (reserved instance), and one execution node (spot instance).  **you must be in the GenomeKeyDeploy/$VERSION directory**
 
 .. code-block:: bash
 
-    starcluster start gk -s 2
+    cd ~/GenomeKeyDeploy/$VERSION
+    source ve/bin/activate
+    starcluster -c etc/starcluster.config start gk
 
 Adding nodes (StarCluster has been configured to request spot instances by default)
 
@@ -71,11 +70,10 @@ Run GenomeKey
 
 .. code-block:: bash
 
-    starcluster sshmaster gk
-    su genomekey
+    ssh -i /path/to/genomekey_key.rsa genomekey@$STARCLUSTER_HOST
     # tmux is highly recommended here
 
-    cd /genomekey/share/opt/genomekey/$VERSION
+    cd projects/GenomeKey
     source ve/bin/activate
     genomekey -h
 
@@ -96,7 +94,6 @@ steps.
     # example:
     cd ~/projects/StarClusterExtensions/sce/plugins/genomekey/fab
     fab -f gk.py copy_genomekey_dev_environ -H gk -i ~/.starcluster/ngx_keys/genomekey_key.rsa
-
 
 
 (Advanced) Creating a custom AMI

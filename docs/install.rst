@@ -12,7 +12,7 @@ Install GenomeKey
     pip install virtualenv --user
     mkdir -p ~/projects
     cd ~/projects
-    git clone git@github.com:EnterpriseGenomics/GenomeKey.git GenomeKey
+    git clone git@github.com:LPM-HMS/GenomeKey2.git
     cd GenomeKey
 
     virtualenv ve

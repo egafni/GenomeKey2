@@ -47,7 +47,7 @@ def run_germline(execution, target_bed, input_path=None, s3fs=None):
     aligned_tasks = align(execution, fastq_tasks, target_bed_tasks)
     called_tasks = variant_call(execution, aligned_tasks, target_bed_tasks)
 
-    execution.run(cmd_wrapper=make_s3_cmd_fxn_wrapper(s3fs) if s3fs else default_cmd_fxn_wrapper)
+    execution.run(cmd_wrapper=make_s3_cmd_fxn_wrapper(s3fs) if s3fs else shared_fs_cmd_fxn_wrapper)
 
     if execution.successful:
         execution.log.info('Final vcf: %s' % opj(s3fs if s3fs else execution.output_dir,
@@ -63,37 +63,38 @@ def run_germline(execution, target_bed, input_path=None, s3fs=None):
         s3cmd.cp(dburl.replace('sqlite:///', ''), opj(s3fs, 'sqlite.db.backup'))
 
 
-def split_large_fastq_files(execution, fastq_tasks):
-    def gen():
-        for tags, (fastq_task,) in group(fastq_tasks, ['sample_name', 'library', 'platform', 'platform_unit', 'rgid', 'chunk', 'read_pair']):
-            fastq_path = fastq_task.output_files[0]
-            file_size = float(s3run.get_filesize(fastq_path) if fastq_path.startswith('s3://') else os.stat(file_size).st_size)
-
-            if file_size > FASTQ_MAX_CHUNK_SIZE:
-                # split into 500MB files
-                num_chunks = int(math.ceil(float(file_size) / FASTQ_MAX_CHUNK_SIZE))
-                assert num_chunks < 100, 'Doubt you want this many chunks'
-
-                out_path = 'SM_{sample_name}/work/LB_{library}/RP_{read_pair}/chunk{chunk}'.format(**fastq_task.tags)
-                prefix = opj(out_path, 'reads_')
-
-                split_task = execution.add_task(fastq.split_fastq_file,
-                                                dict(num_chunks=num_chunks,
-                                                     prefix=prefix,
-                                                     out_fastqs=get_split_paths(prefix, num_chunks),
-                                                     **fastq_task.tags),
-                                                fastq_task,
-                                                out_dir=out_path)
-
-                for out_fastq in split_task.output_files:
-                    yield execution.add_task(load_input, make_dict(fastq_task.tags, in_file=out_fastq),
-                                             split_task, stage_name='Load_Split_Fastq_Files'
-                    )
-
-            else:
-                yield fastq_task
-
-    return list(gen())
+# def split_large_fastq_files(execution, fastq_tasks):
+#
+#     def gen():
+#         for tags, (fastq_task,) in group(fastq_tasks, ['sample_name', 'library', 'platform', 'platform_unit', 'rgid', 'chunk', 'read_pair']):
+#             fastq_path = fastq_task.output_files[0]
+#             file_size = float(s3run.get_filesize(fastq_path) if fastq_path.startswith('s3://') else os.stat(file_size).st_size)
+#
+#             if file_size > FASTQ_MAX_CHUNK_SIZE:
+#                 # split into 500MB files
+#                 num_chunks = int(math.ceil(float(file_size) / FASTQ_MAX_CHUNK_SIZE))
+#                 assert num_chunks < 100, 'Doubt you want this many chunks'
+#
+#                 out_path = 'SM_{sample_name}/work/LB_{library}/RP_{read_pair}/chunk{chunk}'.format(**fastq_task.tags)
+#                 prefix = opj(out_path, 'reads_')
+#
+#                 split_task = execution.add_task(fastq.split_fastq_file,
+#                                                 dict(num_chunks=num_chunks,
+#                                                      prefix=prefix,
+#                                                      out_fastqs=get_split_paths(prefix, num_chunks),
+#                                                      **fastq_task.tags),
+#                                                 fastq_task,
+#                                                 out_dir=out_path)
+#
+#                 for out_fastq in split_task.output_files:
+#                     yield execution.add_task(load_input, make_dict(fastq_task.tags, in_file=out_fastq),
+#                                              split_task, stage_name='Load_Split_Fastq_Files'
+#                     )
+#
+#             else:
+#                 yield fastq_task
+#
+#     return list(gen())
 
 
 def align(execution, fastq_tasks, target_bed_tasks):

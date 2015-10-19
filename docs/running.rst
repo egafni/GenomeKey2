@@ -27,7 +27,7 @@ Here are some example datasets to test.
 .. code-block:: bash
 
     # A single gene
-    genomekey -d germline -n 'Test_BRCAo' /genomekey/share/test/brca/input_s3.tsv --target_bed /genomekey/share/test/brca/targets.bed
+    genomekey -d germline -n 'Test_BRCA' /genomekey/share/test/brca/input_s3.tsv --target_bed /genomekey/share/test/brca/targets.bed
 
     # A gene panel
     cd /mnt/genomekey/share/test/1000g
