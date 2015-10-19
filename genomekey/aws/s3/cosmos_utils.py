@@ -43,6 +43,60 @@ def can_stream(input_param_names):
 
 
 import funcsigs
+from cosmos.core.cmd_fxn.signature import default_prepend
+
+
+def shared_fs_cmd_fxn_wrapper(task, stage_name, input_map, output_map):
+    """
+    WARNING this function signature is not set in stone yet and may change, replace at your own risk.
+
+    :param task:
+    :param input_map:
+    :param output_map:
+    :return:
+    """
+
+    def real_decorator(fxn, *args, **kwargs):
+        fxn_sig = funcsigs.signature(fxn)
+
+        # for some reason decorator.decorator is using args instead of kwargs..
+        # repopulate kwargs manually.
+        for i, (k, parameter) in enumerate(fxn_sig.parameters.items()):
+            kwargs[k] = args[i]
+
+        def to_stream(value):
+            if value.startswith('s3://'):
+                return s3cmd.stream_in(value)
+            else:
+                return '<(cat %s)' % value
+
+        # def to_pull(value):
+        #     if value.startswith('s3://'):
+        #         tmp_file = 'tmp-%s__%s' % (random_str(6), os.path.basename(value))
+        #         s3_pull_path = value
+        #         return s3cmd.cp(s3_pull_path, tmp_file, chrom=task.tags.get('contig')), tmp_file
+
+
+
+        for key, value in input_map.items():
+            if key in getattr(fxn, 'can_stream', []):
+                if isinstance(value, list):
+                    kwargs[key] = map(to_stream, value)
+                else:
+                    kwargs[key] = to_stream(value)
+            # else:
+            #     if isinstance(value, list):
+            #         kwargs[key] = map(to_pull, value)
+            #     else:
+            #         kwargs[key] = to_stream(to_pull)
+
+        r = fxn(**kwargs)
+        if r is None:
+            return NOOP
+        else:
+            return default_prepend(task.execution.output_dir, task.output_dir) + r
+
+    return decorator.decorator(real_decorator)
 
 
 def make_s3_cmd_fxn_wrapper(s3_path):
@@ -144,7 +198,7 @@ def make_s3_cmd_fxn_wrapper(s3_path):
             fifo_lines, s3_push_cmds = partition(lambda cmd: cmd.startswith('mkfifo'), filter(bool, gen_pushes()))
             fifo_lines, s3_push_cmds = list(fifo_lines), list(s3_push_cmds)
             # s3_push_all_outputs = "\n".join('/usr/bin/time -f "s3 push #{0} %E" {1}  2>&1 &'.format(i, l) for i, l in enumerate(cp_lines)) + '\nwait' if len(
-            #     cp_lines) else ''
+            # cp_lines) else ''
             fifo_cmds += "\n".join('%s &' % l for l in fifo_lines) + "\n" if len(fifo_lines) else ''
 
             r = fxn(**kwargs)
@@ -193,6 +247,7 @@ echo "Mount space before after pull: `df -h |grep scratch`"
 
 
     return s3_cmd_fxn_wrapper
+
 
 parallel = jinja2.Template("""
 {%- if cmds|length -%}

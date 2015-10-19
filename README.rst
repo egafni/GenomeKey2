@@ -1,7 +1,7 @@
 GenomeKey
 +++++++++++
 
-`GenomeKey Documentation <http://enterprisegenomics.github.io/GenomeKey/>`_
+`GenomeKey Documentation <http://lpm-hms.github.io/GenomeKey/>`_
 
 
 Testing
