@@ -146,30 +146,28 @@
 </ol>
 <p>3) Configure starcluster and awscli
 3) Launch the cluster!</p>
-<div class="highlight-bash"><div class="highlight"><pre><span class="c"># Clone Repositories</span>
-<span class="nb">cd</span> ~/projects
-git clone -b master git@github.com:egafni/StarClusterExtensions.git
-git clone -b genomekey git@github.com:egafni/StarCluster.git  <span class="c"># unfortunately I had to fork StarCluster</span>
-
-<span class="c"># Also clone Cosmos/GenomeKey. They will get rsynced to the cluster by StarClusterExtensions</span>
-git clone -b master git@github.com:LPM-HMS/COSMOS-2.0.git Cosmos
-git clone -b master git@github.com:EnterpriseGenomics/GenomeKey.git
+<div class="highlight-bash"><div class="highlight"><pre><span class="c"># Clone repos</span>
+<span class="nb">cd</span> ~/GenomeKeyDeploy/<span class="nv">$VERSION</span>
+git clone -b master https://github.com/egafni/StarClusterExtensions.git
+git clone -b genomekey https://github.com/egafni/StarCluster.git
+git clone -b master https://github.com/LPM-HMS/COSMOS-2.0.git Cosmos
+git clone -b master https://github.com/LPM-HMS/GenomeKey2.git GenomeKey
 
 <span class="c"># Create a virtual environment for StarCluster and StarClusterExtensions</span>
-<span class="nb">cd</span> ~/projects/StarClusterExtensions
 virtualenv ve
 <span class="nb">source </span>ve/bin/activate
 
-pip install ~/projects/StarCluster ~/projects/StarClusterExtensions
+pip install StarCluster/ StarClusterExtensions/
 
-<span class="c"># This is the default genomekey starcluster configuration</span>
-mkdir -p ~/.starcluster
-cp etc/config ~/.starcluster/config
-<span class="c"># Edit ~/.starcluster/config and fill out necessary fields</span>
+mkdir etc/
+cp StarClusterExtensions/etc/config etc/starcluster.config
+<span class="c"># Edit etc/starcluster.config and fill out necessary fields</span>
 
 
-<span class="c"># install the aws cli, and configure it (you have to store your AWS credentials in two places, StarCluster&#39;s config and aws cli&#39;s config)</span>
-<span class="c"># this configuration file will be pushed to the starcluster clusters so that genomekey can use aws as well</span>
+
+<span class="c"># install the aws cli, and configure it as well (you have to store your AWS credentials in two places)</span>
+<span class="c"># this configuration file will be pushed to the starcluster clusters so that genomekey can use aws</span>
+<span class="c"># TODO just infer awscli config from starcluster config</span>
 brew install awscli <span class="c"># or sudo apt-get install awscli</span>
 aws configure
 </pre></div>
@@ -177,8 +175,10 @@ aws configure
 </div>
 <div class="section" id="launch-cluster">
 <h2>2.2. Launch Cluster<a class="headerlink" href="#launch-cluster" title="Permalink to this headline">¶</a></h2>
-<p>This will launch a single master node (reserved instance), and one execution node (spot instance)</p>
-<div class="highlight-bash"><div class="highlight"><pre>starcluster start gk -s 2
+<p>This will launch a single master node (reserved instance), and one execution node (spot instance).  <strong>you must be in the GenomeKeyDeploy/$VERSION directory</strong></p>
+<div class="highlight-bash"><div class="highlight"><pre><span class="nb">cd</span> ~/GenomeKeyDeploy/<span class="nv">$VERSION</span>
+<span class="nb">source </span>ve/bin/activate
+starcluster -c etc/starcluster.config start gk
 </pre></div>
 </div>
 <p>Adding nodes (StarCluster has been configured to request spot instances by default)</p>
@@ -193,11 +193,10 @@ aws configure
 </div>
 <div class="section" id="run-genomekey">
 <h2>2.3. Run GenomeKey<a class="headerlink" href="#run-genomekey" title="Permalink to this headline">¶</a></h2>
-<div class="highlight-bash"><div class="highlight"><pre>starcluster sshmaster gk
-su genomekey
+<div class="highlight-bash"><div class="highlight"><pre>ssh -i /path/to/genomekey_key.rsa genomekey@<span class="nv">$STARCLUSTER_HOST</span>
 <span class="c"># tmux is highly recommended here</span>
 
-<span class="nb">cd</span> /genomekey/share/opt/genomekey/<span class="nv">$VERSION</span>
+<span class="nb">cd </span>projects/GenomeKey
 <span class="nb">source </span>ve/bin/activate
 genomekey -h
 </pre></div>
