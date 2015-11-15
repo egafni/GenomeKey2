@@ -23,5 +23,4 @@ class GenomeKey():
         flask_app.secret_key = '\x16\x89\xf5-\tK`\xf5FY.\xb9\x9c\xb4qX\xfdm\x19\xbd\xdd\xef\xa9\xe2'
         flask_app.register_blueprint(gemon_bprint, url_prefix='/gemon')
         self.flask_app = flask_app
-        self.cosmos_app = Cosmos(settings['gk']['database_url'], default_drm=settings['gk']['default_drm'], flask_app=flask_app
-                                 )
+        self.cosmos_app = Cosmos(settings['gk']['database_url'], default_drm=settings['gk']['default_drm'], flask_app=flask_app)

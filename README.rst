@@ -1,7 +1,7 @@
 GenomeKey
 +++++++++++
 
-`GenomeKey Documentation <http://lpm-hms.github.io/GenomeKey/>`_
+`GenomeKey Documentation <http://lpm-hms.github.io/GenomeKey2/>`_
 
 
 Testing
@@ -12,7 +12,7 @@ Testing
     # test data is currently in s3 in genomekey-share
 
     source ~/projects/GenomeKey/ve/bin/activate
-    ~/bin/genomekey -d dna-seq -n "Test" -t tiny_target.bed input_tiny.tsv
+    ~/bin/genomekey -d germline -n "Test" -t tiny_target.bed input_tiny.tsv
 
 
 
