@@ -8,7 +8,7 @@ from logging import log
 import itertools as it
 import sys
 import logging as log
-from cosmos.util.iterstuff import take
+from more_itertools import take
 import io
 
 log.basicConfig(format='[%(asctime)s] %(message)s', datefmt='%m/%d/%Y %I:%M:%S %p', level=log.INFO)
