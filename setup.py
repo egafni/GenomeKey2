@@ -35,7 +35,8 @@ setup(
     maintainer_email="erik_gafni@hms.harvard.edu",
     license="MIT",
     install_requires=[
-        'cosmos-wfm',
+        'recordtype',
+	'cosmos-wfm',
         'configparser',
         'futures',
         'ipdb',
