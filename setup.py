@@ -22,10 +22,6 @@ def find_all(path, reg_expr, inverse=False, remove_prefix=False):
                     out = out.replace(path, '')
                 yield out
 
-
-with open('requirements.in') as fp:
-    install_requires = [line.strip() for line in fp]
-
 setup(
     # Metadata
     name="genomekey",
@@ -37,7 +33,17 @@ setup(
     maintainer="Erik Gafni",
     maintainer_email="erik_gafni@hms.harvard.edu",
     license="MIT",
-    install_requires=install_requires,
+    install_requires=[
+        'recordtype',
+	    'cosmos-wfm',
+        'configparser',
+        'futures',
+        'ipdb',
+        'twilio',
+        'gntp',
+        'fabric',
+        'awscli'
+    ],
     scripts=["bin/genomekey"],
     # Packaging Instructions
     packages=find_packages(),
