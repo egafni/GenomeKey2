@@ -59,6 +59,7 @@ def indel_realigner(mem_req=8 * 1024,
         -known {s[ref][1kg_indel_vcf]} \
         -known {s[ref][mills_vcf]} \
         -model USE_READS \
+        --filter_bases_not_stored \
         {intervals}
 
         {s[opt][samtools]} index {out_bam}
