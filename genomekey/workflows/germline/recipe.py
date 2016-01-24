@@ -3,7 +3,7 @@ from genomekey.api import settings, make_s3_cmd_fxn_wrapper, s3cmd, s3run, share
 
 from ..tools import bwa, picard, gatk, samtools, fastqc, bed, fastq
 from . import util
-from genomekey.bin.fastq.split_fastq_file import get_split_paths
+# from genomekey.bin.fastq.split_fastq_file import get_split_paths
 from genomekey.aws.s3 import cmd as s3cmd
 
 
