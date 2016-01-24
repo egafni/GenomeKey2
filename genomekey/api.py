@@ -48,7 +48,7 @@ def get_submit_args(task, default_queue=None, parallel_env='orte'):
 
         resource_str = ','.join(g())
 
-        return '-pe {parallel_env} {cpu_req} -l num_proc={cpu_req} {priority} -N "{jobname}"'.format(resource_str=resource_str, priority=priority,
+        return '-l num_proc={cpu_req} {priority} -N "{jobname}"'.format(resource_str=resource_str, priority=priority,
                                                                                jobname=jobname, cpu_req=cpu_req, parallel_env=parallel_env)
     elif drm == 'local':
         return None
