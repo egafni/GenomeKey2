@@ -104,7 +104,7 @@ def parse_args():
     # Todo refactor this into functions
     if f.__name__ in workflow_fxns.keys():
         # assert_references_exist()
-        d = {n: kwargs.pop(n) for n in ['name', 'restart', 'skip_confirm', 'max_cpus', 'max_attempts', 'comments']}
+        d = {n: kwargs.pop(n) for n in ['name', 'restart', 'skip_confirm', 'max_cores', 'max_attempts', 'comments']}
         comments = d.pop('comments')
         workflow_type = workflow_fxns[f.__name__]
 
