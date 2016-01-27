@@ -41,7 +41,7 @@ def fastqc(core_req=4,
 
             {cat} | \
             {s[opt][fastqc]} \
-            --threads {cpu_req} \
+            --threads {core_req} \
             --dir {s[gk][tmp_dir]} \
             -o {out_dir} \
             /dev/stdin

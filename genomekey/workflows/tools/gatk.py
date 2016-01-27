@@ -35,7 +35,7 @@ def realigner_target_creator(core_req=4,
         -o {out_sites} \
         --known {s[ref][1kg_indel_vcf]} \
         --known {s[ref][mills_vcf]} \
-        -nt {cpu_req} \
+        -nt {core_req} \
         {intervals}
     """.format(s=s, gatk=gatk(mem_req), **locals())
 
@@ -82,7 +82,7 @@ def haplotype_caller(core_req=8,
         -T HaplotypeCaller \
         -R {s[ref][reference_fasta]} \
         -D {s[ref][dbsnp_vcf]} \
-        -nct {cpu_req} \
+        -nct {core_req} \
         --emitRefConfidence GVCF \
         -stand_call_conf 30 \
         -stand_emit_conf 10 \
@@ -111,7 +111,7 @@ def genotype_gvcfs(core_req=8,
         {gatk} \
         -T GenotypeGVCFs \
         -R {s[ref][reference_fasta]} \
-        -nt {cpu_req} \
+        -nt {core_req} \
         -V {in_vcfs} \
         -o {out_vcf}
     """.format(s=s, gatk=gatk(mem_req), **locals())
