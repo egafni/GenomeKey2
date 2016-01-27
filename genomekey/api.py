@@ -23,7 +23,7 @@ def get_submit_args(task, default_queue=None, parallel_env='orte'):
     use_mem_req = False
     use_time_req = False
 
-    cpu_req = task.cpu_req
+    core_req = task.core_req
     mem_req = task.mem_req if use_mem_req else None
     time_req = task.time_req if use_time_req else None
 
@@ -35,21 +35,21 @@ def get_submit_args(task, default_queue=None, parallel_env='orte'):
     if drm in ['lsf', 'drmaa:lsf']:
         rusage = '-R "rusage[mem={mem}] ' if mem_req and use_mem_req else ''
         time = ' -W 0:{0}'.format(task.time_req) if task.time_req else ''
-        return '-R "{rusage}span[hosts=1]" -n {task.cpu_req}{time}{queue} -J "{jobname}"'.format(**locals())
+        return '-R "{rusage}span[hosts=1]" -n {task.core_req}{time}{queue} -J "{jobname}"'.format(**locals())
 
     elif drm in ['ge', 'drmaa:ge']:
-        h_vmem = int(math.ceil(mem_req / float(cpu_req))) if mem_req else None
+        h_vmem = int(math.ceil(mem_req / float(core_req))) if mem_req else None
 
         def g():
-            resource_reqs = dict(h_vmem=h_vmem, slots=cpu_req, time_req=time_req)
+            resource_reqs = dict(h_vmem=h_vmem, slots=core_req, time_req=time_req)
             for k, v in resource_reqs.items():
                 if v is not None:
                     yield '%s=%s' % (k, v)
 
         resource_str = ','.join(g())
 
-        return '-l num_proc={cpu_req} {priority} -N "{jobname}"'.format(resource_str=resource_str, priority=priority,
-                                                                               jobname=jobname, cpu_req=cpu_req, parallel_env=parallel_env)
+        return '-l num_proc={core_req} {priority} -N "{jobname}"'.format(resource_str=resource_str, priority=priority,
+                                                                               jobname=jobname, core_req=core_req, parallel_env=parallel_env)
     elif drm == 'local':
         return None
     else:

@@ -9,7 +9,7 @@ from . import picard
 @can_stream(['in_fastqs','in_fastq1', 'in_fastq2'])
 def bwa_mem(rgid, sample_name, library, platform, platform_unit,
             reference=s['ref']['reference_fasta'],
-            cpu_req=16,
+            core_req=16,
             # in_fastq1=find('.fastq', tags=dict(read_pair='1')),
             # in_fastq2=find('.fastq', tags=dict(read_pair='2')),
             in_fastqs=find('.fastq', n=2),
@@ -20,7 +20,7 @@ def bwa_mem(rgid, sample_name, library, platform, platform_unit,
     return r"""
 
               {s[opt][bwa]} mem \
-              -t {cpu_req} -L 0 -M \
+              -t {core_req} -L 0 -M \
               -R "@RG\tID:{rgid}\tLB:{library}\tSM:{sample_name}\tPL:{platform}\tPU:{platform_unit}" \
               {reference} \
               {in_fastq1} \
@@ -36,7 +36,7 @@ def bwa_mem(rgid, sample_name, library, platform, platform_unit,
 # @can_stream(['in_fastq1', 'in_fastq2'])
 # def bwa_mem_with_trimming(rgid, sample_name, library, platform, platform_unit,
 #             reference=s['ref']['reference_fasta'],
-#             cpu_req=16,
+#             core_req=16,
 #             in_fastq1=find('.fastq', tags=dict(read_pair='1')),
 #             in_fastq2=find('.fastq', tags=dict(read_pair='2')),
 #             out_bam=out_dir('aligned.bam'),
@@ -48,7 +48,7 @@ def bwa_mem(rgid, sample_name, library, platform, platform_unit,
 #             | {mark_illumina_adapters} \
 #             | {sam_to_fastq}
 #             | {s[opt][bwa]} mem \
-#               -t {cpu_req} -L 0 -M -p \
+#               -t {core_req} -L 0 -M -p \
 #               -R "@RG\tID:{rgid}\tLB:{library}\tSM:{sample_name}\tPL:{platform}\tPU:{platform_unit}" \
 #               {reference} \
 #               /dev/stdin \

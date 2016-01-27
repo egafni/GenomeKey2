@@ -30,7 +30,7 @@ def ngsutils_fastq_split(num_chunks, prefix, in_fastq=find('fastq|fastq.gz')):
 # @can_stream(['out_fastq1', 'out_fastq2'])
 # cpu_req is so that scratch space doesn't run out.  Need to get streaming to work.  It seems like streaming in is not supported, but streaming out
 # could work with named pipes or gzipping inside the anonymous pipe?  Spent a few hours, and nothing is working :(
-def cut_adapt(cpu_req=8,
+def cut_adapt(core_req=8,
               in_fastq1=find('.fastq', tags=dict(read_pair='1')),
               in_fastq2=find('.fastq', tags=dict(read_pair='2')),
               out_fastq1=out_dir('trimmed_r1.fastq.gz'),

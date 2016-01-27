@@ -16,7 +16,7 @@ def picard(time_req=8 * 60, mem_req=3 * 1024, extra_java_args=''):
 
 
 # @can_stream([''])
-def mark_duplicates(cpu_req=16,  # for scratch space
+def mark_duplicates(core_req=8,  # for scratch space
                     mem_req=12 * 1024,
                     in_bams=find('bam$', n='>=1'),
                     in_bais=find('bai$', n='>=1'),

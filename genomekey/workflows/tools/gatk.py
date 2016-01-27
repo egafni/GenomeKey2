@@ -15,7 +15,7 @@ def gatk(mem_req=5 * 1024):
     )
 
 
-def realigner_target_creator(cpu_req=4,
+def realigner_target_creator(core_req=4,
                              mem_req=8 * 1024,
                              in_target_bed=find('target.bed'),
                              in_bams=find('bam$', n='>0'),
@@ -69,7 +69,7 @@ def indel_realigner(mem_req=8 * 1024,
                **locals())
 
 
-def haplotype_caller(cpu_req=8,
+def haplotype_caller(core_req=8,
                      mem_req=16 * 1024,
                      in_bams=find('bam$', n='>0'),
                      in_bais=find('bai$', n='>0'),
@@ -101,7 +101,7 @@ def haplotype_caller(cpu_req=8,
     """.format(s=s, gatk=gatk(mem_req), **locals())
 
 
-def genotype_gvcfs(cpu_req=8,
+def genotype_gvcfs(core_req=8,
                    mem_req=12 * 1024,
                    in_vcfs=find('vcf|vcf.gz$', n='>0'),
                    out_vcf=out_dir('variants.vcf')):

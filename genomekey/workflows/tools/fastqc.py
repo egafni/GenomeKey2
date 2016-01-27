@@ -7,7 +7,7 @@ from cosmos.util.helpers import random_str
 
 # cpu_req is high so nodes don't run out of scratch
 @can_stream(['in_r1s', 'in_r2s'])
-def fastqc(cpu_req=8,
+def fastqc(core_req=2,
            in_r1s=find('fastq', n='>=1', tags=dict(read_pair='1')),
            in_r2s=find('fastq', n='>=1', tags=dict(read_pair='2')),
            out_dir=out_dir('fastqc/')):
