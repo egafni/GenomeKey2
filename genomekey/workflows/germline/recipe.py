@@ -159,7 +159,7 @@ def variant_call(execution, aligned_tasks, target_bed_tasks):
                                         out_dir='SM_{sample_name}/work/contigs/{contig}')
                      for tags, parents in group(aligned_tasks, ['sample_name', 'contig'])]
 
-    # combine_gvcf_tasks = many2one(gatk.combine_gvcfs, hapcall_tasks, groupby=['sample_name'], out_dir='SM_{sample_name}')
+    combine_gvcf_tasks = many2one(gatk.combine_gvcfs, hapcall_tasks, groupby=['sample_name'], out_dir='SM_{sample_name}')
 
     genotype_tasks = many2one(gatk.genotype_gvcfs, hapcall_tasks, groupby=[], out_dir='')
 
