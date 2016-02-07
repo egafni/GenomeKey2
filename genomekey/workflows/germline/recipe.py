@@ -19,7 +19,7 @@ FASTQ_MAX_CHUNK_SIZE = 2 ** 30 / 2
 FASTQ_MAX_CHUNK_SIZE = 2 ** 20  # 1Mb for testing
 
 
-def run_germline(execution, target_bed, input_path=None, s3fs=None):
+def run_germline(execution, max_cores, max_attempts, target_bed, input_path=None, s3fs=None):
     """
     Executes the germline variant calling pipeline
 
@@ -47,7 +47,8 @@ def run_germline(execution, target_bed, input_path=None, s3fs=None):
     aligned_tasks = align(execution, fastq_tasks, target_bed_tasks)
     called_tasks = variant_call(execution, aligned_tasks, target_bed_tasks)
 
-    execution.run(cmd_wrapper=make_s3_cmd_fxn_wrapper(s3fs) if s3fs else shared_fs_cmd_fxn_wrapper)
+    execution.run(max_cores=max_cores, max_attempts=max_attempts,
+                  cmd_wrapper=make_s3_cmd_fxn_wrapper(s3fs) if s3fs else shared_fs_cmd_fxn_wrapper)
 
     if execution.successful:
         execution.log.info('Final vcf: %s' % opj(s3fs if s3fs else execution.output_dir,
@@ -159,7 +160,7 @@ def variant_call(execution, aligned_tasks, target_bed_tasks):
                                         out_dir='SM_{sample_name}/work/contigs/{contig}')
                      for tags, parents in group(aligned_tasks, ['sample_name', 'contig'])]
 
-    combine_gvcf_tasks = many2one(gatk.combine_gvcfs, hapcall_tasks, groupby=['sample_name'], out_dir='SM_{sample_name}')
+    # combine_gvcf_tasks = many2one(gatk.combine_gvcfs, hapcall_tasks, groupby=['sample_name'], out_dir='SM_{sample_name}')
 
     genotype_tasks = many2one(gatk.genotype_gvcfs, hapcall_tasks, groupby=[], out_dir='')
 
