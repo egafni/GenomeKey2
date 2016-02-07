@@ -16,7 +16,7 @@ def split_fastq_file(num_chunks, prefix, out_fastqs, in_fastq=find('fq.gz|\.fast
                **locals())
 
 
-def ngsutils_fastq_split(num_chunks, prefix, in_fastq=find('fastq|fastq.gz')):
+def ngsutils_fastq_split(num_chunks, prefix, in_fastq=find('fq.gz|\.fastq|fastq.gz')):
     """
     Doesn't work with streams :(
     """
@@ -31,8 +31,8 @@ def ngsutils_fastq_split(num_chunks, prefix, in_fastq=find('fastq|fastq.gz')):
 # cpu_req is so that scratch space doesn't run out.  Need to get streaming to work.  It seems like streaming in is not supported, but streaming out
 # could work with named pipes or gzipping inside the anonymous pipe?  Spent a few hours, and nothing is working :(
 def cut_adapt(core_req=3,
-              in_fastq1=find('.fastq', tags=dict(read_pair='1')),
-              in_fastq2=find('.fastq', tags=dict(read_pair='2')),
+              in_fastq1=find('fq.gz|\.fastq|fastq.gz', tags=dict(read_pair='1')),
+              in_fastq2=find('fq.gz|\.fastq|fastq.gz', tags=dict(read_pair='2')),
               out_fastq1=out_dir('trimmed_r1.fastq.gz'),
               out_fastq2=out_dir('trimmed_r2.fastq.gz')):
     # out_fastq1='>( gzip > %s)' % out_fastq1
