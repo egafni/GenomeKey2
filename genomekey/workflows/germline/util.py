@@ -14,10 +14,12 @@ def get_bed_contigs(in_bed):
 
 
 def parse_inputs(input_path):
-    # columns = ['sample_name', 'rgid', 'chunk', 'read_pair', 'library', 'platform_unit', 'platform', 'path']
+    columns = ['sample_name', 'rgid', 'chunk', 'read_pair', 'library', 'platform_unit', 'platform', 'path']
     with open(input_path) as fh:
         for d in csv.DictReader(fh, delimiter="\t"):
-            f = lambda p: p if p.startswith('s3://') else os.path.abspath(p)
+            # f = lambda p: p if p.startswith('s3://') else os.path.abspath(p)
+            for c in columns:
+                assert c in d, 'missing column %s in %s' % (c, input_path)
             yield d.pop('path'), d
 
 def download_from_s3(in_file, out_file=out_dir('{in_file}')):
