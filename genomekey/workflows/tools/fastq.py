@@ -6,7 +6,7 @@ bin = lambda p: os.path.join(library_path, 'bin', p)
 
 
 @can_stream(['in_fastq'])
-def split_fastq_file(num_chunks, prefix, out_fastqs, in_fastq=find('fastq|fastq.gz')):
+def split_fastq_file(num_chunks, prefix, out_fastqs, in_fastq=find('fq.gz|\.fastq|fastq.gz')):
     return r"""
 
         python {b} {in_fastq} {prefix} {num_chunks}
