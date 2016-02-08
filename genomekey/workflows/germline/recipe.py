@@ -141,7 +141,7 @@ def align(execution, fastq_tasks, target_bed_tasks):
     # Merge bams so we have a sample bam.  Returning realign, so bams remained split by contig for downstream
     # parallelization
     merged = many2one(samtools.merge, realigned_by_sample_contig_tasks, ['sample_name'], out_dir='SM_{sample_name}', stage_name="Merge_Sample_Bams")
-    one2one(picard.collect_multiple_metrics, merged, out_dir='SM_{sample_name}')
+    one2one(picard.collect_multiple_metrics, merged, out_dir='SM_{sample_name}/metrics')
 
     return realigned_by_sample_contig_tasks
 
