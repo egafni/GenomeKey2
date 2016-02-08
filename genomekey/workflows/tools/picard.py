@@ -83,6 +83,7 @@ def mark_illumina_adapters(mem_req=8 * 1024,
                picard=picard(),
                **locals())
 
+
 def collect_multiple_metrics(in_bam=find('bam'),
                              out_path=out_dir('picard'),
                              reference_fasta=s['ref']['reference_fasta']):
@@ -92,4 +93,16 @@ def collect_multiple_metrics(in_bam=find('bam'),
       O={out_path} \
       R={reference_fasta}
     """.format(picard=picard(),
+               **locals())
+
+
+def merge_sam_files(in_bams=find('bam', 'n>=1'),
+                    out_bam=out_dir('merged.bam')):
+    return r"""
+        {picard} MergeSamFiles \
+        {inputs} \
+        O={out_bam} \
+        ASSUME_SORTED=true
+    """.format(picard=picard(),
+               inputs=list_to_input(in_bams),
                **locals())
