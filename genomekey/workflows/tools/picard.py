@@ -82,3 +82,14 @@ def mark_illumina_adapters(mem_req=8 * 1024,
     """.format(s=s,
                picard=picard(),
                **locals())
+
+def collect_multiple_metrics(in_bam=find('bam'),
+                             out_path=out_dir('metrics/picard'),
+                             reference_fasta=s[ref][reference_fasta]):
+    return r"""
+      {picard} CollectMultipleMetrics \
+      I={in_bam} \
+      O={out_dir} \
+      R={reference_fasta}
+    """.format(picard=picard(),
+               **locals())

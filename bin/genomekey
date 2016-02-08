@@ -117,6 +117,10 @@ def parse_args():
 
         resuming_execution = cosmos.session.query(Execution).filter_by(name=d['name']).count() == 1
 
+        # if d['restart'] and os.path.exists(d['output_dir']):
+        #     import shutil
+        #     shutil.rmtree(d['output_dir'])
+
         ex = cosmos.start(**d)
 
         ex.info['workflow_type'] = workflow_type
