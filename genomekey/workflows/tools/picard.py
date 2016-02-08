@@ -89,7 +89,7 @@ def collect_multiple_metrics(in_bam=find('bam'),
     return r"""
       {picard} CollectMultipleMetrics \
       I={in_bam} \
-      O={out_dir} \
+      O={out_path} \
       R={reference_fasta}
     """.format(picard=picard(),
                **locals())
