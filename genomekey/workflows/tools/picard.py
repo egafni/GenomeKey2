@@ -94,7 +94,7 @@ def collect_multiple_metrics(in_bam=find('bam'),
       R={reference_fasta} \
       {programs}
     """.format(picard=picard(),
-               programs=' '.join('PROGRAM=%s \\ \n' % p for p in
+               programs=' '.join('PROGRAM=%s' % p for p in
                                  ['CollectAlignmentSummaryMetrics', 'CollectInsertSizeMetrics',
                                   'QualityScoreDistribution', 'MeanQualityByCycle',
                                   'CollectBaseDistributionByCycle', 'CollectGcBiasMetrics',
