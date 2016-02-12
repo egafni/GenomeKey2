@@ -14,7 +14,7 @@ def bwa_mem(rgid, sample_name, library, platform, platform_unit,
             # in_fastq2=find('.fastq', tags=dict(read_pair='2')),
             in_fastqs=find('.fastq', n=2),
             out_bam=out_dir('aligned.bam'),
-            out_bai=out_dir('aligned.bam.bai')):
+            out_bai=out_dir('aligned.bai')):
 
     in_fastq1, in_fastq2=in_fastqs
     return r"""
@@ -25,11 +25,9 @@ def bwa_mem(rgid, sample_name, library, platform, platform_unit,
               {reference} \
               {in_fastq1} \
               {in_fastq2} \
-            | {s[opt][samtools]} sort -@ 2 -m 2G - {samtools_out}
-
-            {s[opt][samtools]} index {out_bam}
+            | {picard} SortSam I=/dev/stdin O={out_bam} CREATE_INDEX=true
             """.format(s=s,
-                       samtools_out=out_bam.replace('.bam', ''),
+                       picard=picard(),
                        **locals())
 
 

@@ -1,7 +1,7 @@
 from .util import parse_inputs
 from genomekey.api import settings, make_s3_cmd_fxn_wrapper, s3cmd, s3run, shared_fs_cmd_fxn_wrapper
 
-from ..tools import bwa, picard, gatk, samtools, fastqc, bed, fastq
+from ..tools import bwa, picard, gatk, fastqc, bed, fastq
 from . import util
 # from genomekey.bin.fastq.split_fastq_file import get_split_paths
 from genomekey.aws.s3 import cmd as s3cmd
@@ -140,7 +140,7 @@ def align(execution, fastq_tasks, target_bed_tasks):
 
     # Merge bams so we have a sample bam.  Returning realign, so bams remained split by contig for downstream
     # parallelization
-    merged = many2one(samtools.merge, realigned_by_sample_contig_tasks, ['sample_name'], out_dir='SM_{sample_name}', stage_name="Merge_Sample_Bams")
+    merged = many2one(picard.merge_sam_files, realigned_by_sample_contig_tasks, ['sample_name'], out_dir='SM_{sample_name}', stage_name="Merge_Sample_Bams")
     one2one(picard.collect_multiple_metrics, merged, out_dir='SM_{sample_name}/metrics')
 
     return realigned_by_sample_contig_tasks

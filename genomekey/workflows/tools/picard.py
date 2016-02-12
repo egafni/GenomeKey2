@@ -91,8 +91,14 @@ def collect_multiple_metrics(in_bam=find('bam'),
       {picard} CollectMultipleMetrics \
       I={in_bam} \
       O={out_path} \
-      R={reference_fasta}
+      R={reference_fasta} \
+      {programs}
     """.format(picard=picard(),
+               programs=' '.join('PROGRAM=%s \\n' % p for p in
+                                 ['CollectAlignmentSummaryMetrics', 'CollectInsertSizeMetrics',
+                                  'QualityScoreDistribution', 'MeanQualityByCycle',
+                                  'CollectBaseDistributionByCycle', 'CollectGcBiasMetrics',
+                                  'CollectSequencingArtifactMetrics', 'CollectQualityYieldMetrics']),
                **locals())
 
 
