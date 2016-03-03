@@ -102,7 +102,7 @@ def collect_multiple_metrics(in_bam=find('bam'),
                **locals())
 
 
-def merge_sam_files(in_bams=find('bam', 'n>=1'),
+def merge_sam_files(in_bams=find('bam', n='>=1'),
                     out_bam=out_dir('merged.bam')):
     return r"""
         {picard} MergeSamFiles \
