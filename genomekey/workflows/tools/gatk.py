@@ -111,6 +111,7 @@ def genotype_gvcfs(core_req=8,
         {gatk} \
         -T GenotypeGVCFs \
         -R {s[ref][reference_fasta]} \
+        -D {s[ref][dbsnp_vcf]} \
         -nt {core_req} \
         -V {in_vcfs} \
         -o {out_vcf}
