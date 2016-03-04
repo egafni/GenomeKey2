@@ -1,5 +1,5 @@
 from .util import parse_inputs
-from genomekey.api import settings, make_s3_cmd_fxn_wrapper, s3cmd, s3run, shared_fs_cmd_fxn_wrapper
+from genomekey.api import settings as s, make_s3_cmd_fxn_wrapper, s3cmd, s3run, shared_fs_cmd_fxn_wrapper
 
 from ..tools import bwa, picard, gatk, fastqc, bed, fastq
 from . import util
@@ -55,7 +55,7 @@ def run_germline(execution, max_cores, max_attempts, target_bed, input_path=None
 
 
     # Copy the sqlite db to s3
-    dburl = settings['gk']['database_url']
+    dburl = s['gk']['database_url']
     if s3fs and dburl.startswith('sqlite'):
         # TODO implement so there is a 1-to-1 relationship between a sqlite database and an Execution.  Currently this is pushing way too much information,
         # TODO but will soon be replaced.  Alternative: use amazon RDS!  Or perhaps both?  Could do a sqlalchemy merge and save to sqlite, or implement
