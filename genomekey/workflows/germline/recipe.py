@@ -6,7 +6,6 @@ from . import util
 # from genomekey.bin.fastq.split_fastq_file import get_split_paths
 from genomekey.aws.s3 import cmd as s3cmd
 
-
 from cosmos.api import one2one, many2one, out_dir, group, load_input, Execution, make_dict, bash_call
 from cosmos.core.cmd_fxn.signature import default_cmd_fxn_wrapper
 import os
@@ -66,7 +65,7 @@ def run_germline(execution, max_cores, max_attempts, target_bed, input_path=None
 
 # def split_large_fastq_files(execution, fastq_tasks):
 #
-#     def gen():
+# def gen():
 #         for tags, (fastq_task,) in group(fastq_tasks, ['sample_name', 'library', 'platform', 'platform_unit', 'rgid', 'chunk', 'read_pair']):
 #             fastq_path = fastq_task.output_files[0]
 #             file_size = float(s3run.get_filesize(fastq_path) if fastq_path.startswith('s3://') else os.stat(file_size).st_size)
@@ -163,8 +162,24 @@ def variant_call(execution, aligned_tasks, target_bed_tasks):
 
     # combine_gvcf_tasks = many2one(gatk.combine_gvcfs, hapcall_tasks, groupby=['sample_name'], out_dir='SM_{sample_name}')
 
-    genotype_tasks = many2one(gatk.genotype_gvcfs, hapcall_tasks, groupby=[], out_dir='')
+    genotype_task = many2one(gatk.genotype_gvcfs, hapcall_tasks, groupby=[], out_dir='work/variants_raw.vcf')[0]
+
+    snps = execution.add_task(gatk.select_variants,
+                                tags=dict(in_vcfs=genotype_task.output_files[0],
+                                          out_vcf='work/snps_raw.vcf',
+                                          select_type='SNP',
+                                          in_reference_fasta=s['ref']['reference_fasta_path']
+                                ))
+
+    indels = execution.add_task(gatk.select_variants,
+                                tags=dict(in_vcfs=genotype_task.output_files[0],
+                                          out_vcf='work/indels_raw.vcf',
+                                          select_type='INDEL',
+                                          in_reference_fasta=s['ref']['reference_fasta_path']
+                                ))
 
     # Run VQSR or some basic filtering?
+
+
 
     return genotype_tasks

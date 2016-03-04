@@ -132,3 +132,46 @@ def combine_gvcfs(mem_req=12 * 1024,
     """.format(s=s, gatk=gatk(mem_req), **locals())
 
 
+def select_variants(in_vcfs,
+                    out_vcf,
+                    select_type,
+                    in_reference_fasta,
+                    mem_req=6 * 1024):
+    """
+    :param select_type: "SNP" or "INDEL"
+    """
+    in_vcfs = vcf_list_to_input(in_vcfs)
+
+    return r"""
+        {gatk} \
+        -T SelectVariants \
+        -R {in_reference_fasta} \
+        -V {in_vcfs} \
+        -selectType {select_type} \
+        -o {out_vcf}
+    """.format(s=s, gatk=gatk(mem_req), **locals())
+
+
+def variant_filtration(in_reference_fasta,
+                       in_vcfs,
+                       out_vcf,
+                       filters,
+                       mem_req=6 * 1024):
+    """
+    :param filters: list of tuples of (name, expression)
+    """
+    in_vcfs = vcf_list_to_input(in_vcfs)
+
+    filter_args = ['--filterName "%s" --filterExpression "%s"' % (name, expression)
+                   for name, expression in filters]
+    filter_args = '\\ \n'.join(filter_args)
+
+    return r"""
+        {gatk} \
+        -T VariantFiltration \
+        -R {in_reference_fasta} \
+        -V {in_vcfs} \
+        {filter_args}
+        -o {out_vcf}
+    """.format(s=s, gatk=gatk(mem_req),
+               **locals())
