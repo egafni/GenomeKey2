@@ -25,9 +25,9 @@ def bwa_mem(rgid, sample_name, library, platform, platform_unit,
               {reference} \
               {in_fastq1} \
               {in_fastq2} \
-            | {picard} SortSam I=/dev/stdin O={out_bam} CREATE_INDEX=true
+            | {picard} SortSam I=/dev/stdin O={out_bam} CREATE_INDEX=true SORT_ORDER=coordinate
             """.format(s=s,
-                       picard=picard(),
+                       picard=picard.picard(),
                        **locals())
 
 

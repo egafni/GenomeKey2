@@ -2,7 +2,17 @@ from cosmos.api import find, out_dir, forward
 from genomekey.api import settings as s
 
 bam_list_to_inputs = lambda l: " -I ".join(map(str, l))
-vcf_list_to_input = lambda l: " -V ".join(map(str, l))
+
+
+def vcf_list_to_input(itrbl):
+    def g():
+        for x in itrbl:
+            if isinstance(x, tuple) or iinstance(x, list):
+                yield '--variant:%s %s' % (x[0], x[1])
+            else:
+                yield '--variant %s' % x
+
+    return ' '.join(g())
 
 
 def arg(flag, value=None):
@@ -15,7 +25,7 @@ def gatk(mem_req=5 * 1024):
     )
 
 
-def realigner_target_creator(core_req=4,
+def realigner_target_creator(core_req=8,
                              mem_req=8 * 1024,
                              in_target_bed=find('target.bed'),
                              in_bams=find('bam$', n='>0'),
@@ -24,7 +34,7 @@ def realigner_target_creator(core_req=4,
                              out_bais=forward('in_bais'),
                              out_sites=out_dir('denovo_realign_targets.bed')):
     in_bams = bam_list_to_inputs(in_bams)
-    intervals = arg('--intervals', in_target_bed)
+
     # TODO should we pad intervals?  might be indels on perimeter that need realigner.  Not too worried because we're using HaplotypeCaller, though.
     return r"""
         #could add more knowns from ESP and other seq projects...
@@ -36,8 +46,10 @@ def realigner_target_creator(core_req=4,
         --known {s[ref][1kg_indel_vcf]} \
         --known {s[ref][mills_vcf]} \
         -nt {core_req} \
-        {intervals}
-    """.format(s=s, gatk=gatk(mem_req), **locals())
+        {args}
+    """.format(s=s, gatk=gatk(mem_req),
+               args=arg('--intervals', in_target_bed),
+               **locals())
 
 
 def indel_realigner(mem_req=8 * 1024,
@@ -135,7 +147,7 @@ def combine_gvcfs(mem_req=12 * 1024,
 def select_variants(in_vcfs,
                     out_vcf,
                     select_type,
-                    in_reference_fasta,
+                    in_reference_fasta=s['ref']['reference_fasta'],
                     mem_req=6 * 1024):
     """
     :param select_type: "SNP" or "INDEL"
@@ -152,10 +164,10 @@ def select_variants(in_vcfs,
     """.format(s=s, gatk=gatk(mem_req), **locals())
 
 
-def variant_filtration(in_reference_fasta,
-                       in_vcfs,
+def variant_filtration(in_vcfs,
                        out_vcf,
                        filters,
+                       in_reference_fasta=s['ref']['reference_fasta'],
                        mem_req=6 * 1024):
     """
     :param filters: list of tuples of (name, expression)
@@ -175,3 +187,38 @@ def variant_filtration(in_reference_fasta,
         -o {out_vcf}
     """.format(s=s, gatk=gatk(mem_req),
                **locals())
+
+
+def combine_variants(in_vcfs,
+                     out_vcf,
+                     genotype_merge_options='REQUIRE_UNIQUE',
+                     mem_req=6 * 1024):
+    """
+
+
+    :param genotypemergeoptions: select from the following:
+        UNIQUIFY - Make all sample genotypes unique by file. Each sample shared across RODs gets named sample.ROD.
+        PRIORITIZE - Take genotypes in priority order (see the priority argument).
+        UNSORTED - Take the genotypes in any order.
+        REQUIRE_UNIQUE - Require that all samples/genotypes be unique.
+    """
+    if genotype_merge_options == 'PRIORITIZE':
+        in_vcfs = vcf_list_to_input([(i, p) for p in enumerate(in_vcfs)])
+        priority = '-p %s' % ','.join(range(len(in_vcfs)))
+    else:
+        in_vcfs = vcf_list_to_input(in_vcfs)
+        priority = None
+
+    return r"""
+        {gatk} \
+        -T CombineVariants \
+        -R {s[ref][reference_fasta_path]} \
+        -o {out_vcf} \
+        -genotypeMergeOptions {genotypeMergeOptions} \
+        -V {inputs} \
+        {args}
+    """.format(s=s,
+               gatk=gatk(mem_req),
+               inputs=gatk_inputs(in_vcfs, '-V'),
+               args=arg('-priority', priority)
+                    ** locals())

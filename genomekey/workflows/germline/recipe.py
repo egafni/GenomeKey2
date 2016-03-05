@@ -27,8 +27,8 @@ def run_germline(execution, max_cores, max_attempts, target_bed, input_path=None
     :param str input_path: The path to the input_file tsv of fastq files
     """
     #: chrom -> target_bed_path
-    # target_bed = os.path.abspath(target_bed)
-    # input_path = os.path.abspath(input_path)
+    target_bed = os.path.abspath(os.path.expanduser(target_bed))
+    input_path = os.path.abspath(os.path.expanduser(input_path))
 
     # Copy the target.bed to the output_dir
     assert os.path.exists(target_bed), '%s does not exist' % target_bed
@@ -66,28 +66,28 @@ def run_germline(execution, max_cores, max_attempts, target_bed, input_path=None
 # def split_large_fastq_files(execution, fastq_tasks):
 #
 # def gen():
-#         for tags, (fastq_task,) in group(fastq_tasks, ['sample_name', 'library', 'platform', 'platform_unit', 'rgid', 'chunk', 'read_pair']):
-#             fastq_path = fastq_task.output_files[0]
-#             file_size = float(s3run.get_filesize(fastq_path) if fastq_path.startswith('s3://') else os.stat(file_size).st_size)
+# for tags, (fastq_task,) in group(fastq_tasks, ['sample_name', 'library', 'platform', 'platform_unit', 'rgid', 'chunk', 'read_pair']):
+# fastq_path = fastq_task.output_files[0]
+# file_size = float(s3run.get_filesize(fastq_path) if fastq_path.startswith('s3://') else os.stat(file_size).st_size)
 #
-#             if file_size > FASTQ_MAX_CHUNK_SIZE:
-#                 # split into 500MB files
-#                 num_chunks = int(math.ceil(float(file_size) / FASTQ_MAX_CHUNK_SIZE))
-#                 assert num_chunks < 100, 'Doubt you want this many chunks'
+# if file_size > FASTQ_MAX_CHUNK_SIZE:
+# # split into 500MB files
+# num_chunks = int(math.ceil(float(file_size) / FASTQ_MAX_CHUNK_SIZE))
+# assert num_chunks < 100, 'Doubt you want this many chunks'
 #
-#                 out_path = 'SM_{sample_name}/work/LB_{library}/RP_{read_pair}/chunk{chunk}'.format(**fastq_task.tags)
-#                 prefix = opj(out_path, 'reads_')
+# out_path = 'SM_{sample_name}/work/LB_{library}/RP_{read_pair}/chunk{chunk}'.format(**fastq_task.tags)
+# prefix = opj(out_path, 'reads_')
 #
-#                 split_task = execution.add_task(fastq.split_fastq_file,
-#                                                 dict(num_chunks=num_chunks,
-#                                                      prefix=prefix,
-#                                                      out_fastqs=get_split_paths(prefix, num_chunks),
-#                                                      **fastq_task.tags),
-#                                                 fastq_task,
-#                                                 out_dir=out_path)
+# split_task = execution.add_task(fastq.split_fastq_file,
+# dict(num_chunks=num_chunks,
+# prefix=prefix,
+# out_fastqs=get_split_paths(prefix, num_chunks),
+# **fastq_task.tags),
+# fastq_task,
+# out_dir=out_path)
 #
-#                 for out_fastq in split_task.output_files:
-#                     yield execution.add_task(load_input, make_dict(fastq_task.tags, in_file=out_fastq),
+# for out_fastq in split_task.output_files:
+# yield execution.add_task(load_input, make_dict(fastq_task.tags, in_file=out_fastq),
 #                                              split_task, stage_name='Load_Split_Fastq_Files'
 #                     )
 #
@@ -145,7 +145,7 @@ def align(execution, fastq_tasks, target_bed_tasks):
     return realigned_by_sample_contig_tasks
 
 
-def variant_call(execution, aligned_tasks, target_bed_tasks):
+def variant_call(ex, aligned_tasks, target_bed_tasks):
     """
     Alignments -> Variants
 
@@ -154,32 +154,57 @@ def variant_call(execution, aligned_tasks, target_bed_tasks):
     :param list[Task] target_bed_tasks:
     :return:
     """
+    sp.check_call('cd %s; mkdir -p work output' % ex.output_dir, shell=True)
+
     contig_to_targets = {t.tags['contig']: t for t in target_bed_tasks}
 
-    hapcall_tasks = [execution.add_task(gatk.haplotype_caller, tags=tags, parents=parents + [contig_to_targets[tags['contig']]],
-                                        out_dir='SM_{sample_name}/work/contigs/{contig}')
+    hapcall_tasks = [ex.add_task(gatk.haplotype_caller, tags=tags, parents=parents + [contig_to_targets[tags['contig']]],
+                                 out_dir='SM_{sample_name}/work/contigs/{contig}')
                      for tags, parents in group(aligned_tasks, ['sample_name', 'contig'])]
 
     # combine_gvcf_tasks = many2one(gatk.combine_gvcfs, hapcall_tasks, groupby=['sample_name'], out_dir='SM_{sample_name}')
 
     genotype_task = many2one(gatk.genotype_gvcfs, hapcall_tasks, groupby=[], out_dir='work/variants_raw.vcf')[0]
 
-    snps = execution.add_task(gatk.select_variants,
-                                tags=dict(in_vcfs=genotype_task.output_files[0],
-                                          out_vcf='work/snps_raw.vcf',
-                                          select_type='SNP',
-                                          in_reference_fasta=s['ref']['reference_fasta_path']
-                                ))
+    select_snps_task = ex.add_task(gatk.select_variants,
+                                   tags=dict(in_vcfs=genotype_task.output_files[0],
+                                             out_vcf='work/snps_raw.vcf',
+                                             select_type='SNP'),
+                                   parents=genotype_task
+    )
 
-    indels = execution.add_task(gatk.select_variants,
-                                tags=dict(in_vcfs=genotype_task.output_files[0],
-                                          out_vcf='work/indels_raw.vcf',
-                                          select_type='INDEL',
-                                          in_reference_fasta=s['ref']['reference_fasta_path']
-                                ))
+    filter_snps_task = ex.add_task(gatk.variant_filtration,
+                                   tags=dict(in_vcfs=[select_snps_task.output_files[0]],
+                                             out_vcf='work/snps_filtered.vcf',
+                                             filters=[('QUAL < 30', 'Qual'),
+                                                      ('QD < 2.0', 'QD'),
+                                                      ('FS > 60.0', 'FS'),
+                                                      ('MQ < 40.0', 'MQ'),
+                                                      ('MQRankSum < -12.5', 'MQRankSum'),
+                                                      ('ReadPosRankSum < -8.0', 'ReadPosRankSum')]),
+                                   parents=select_snps_task)
 
-    # Run VQSR or some basic filtering?
+    select_indels_task = ex.add_task(gatk.select_variants,
+                                     tags=dict(in_vcfs=[genotype_task.output_files[0]],
+                                               out_vcf='work/indels_raw.vcf',
+                                               select_type='INDEL'),
+                                     parents=genotype_task)
+
+    filter_indels_task = ex.add_task(gatk.variant_filtration,
+                                     tags=dict(in_vcfs=[select_indels_task.output_files[0]],
+                                               out_vcf='work/indels_filtered.vcf',
+                                               filters=[('QD < 2.0', 'QD'),
+                                                        ('FS > 200.0', 'FS'),
+                                                        ('ReadPosRankSum < -2', 'ReadPosRankSum')]),
+                                     parents=select_indels_task)
+
+    combine_variants_task = ex.add_task(gatk.combine_variants,
+                                        tags=dict(in_vcfs=[filter_indels_task.tags['out_vcf'], filter_snps_task.tags['out_vcf']],
+                                                  out_vcf='output/variants.vcf',
+                                                  genotype_merge_options='PRIORITIZE'),
+                                        parents=[filter_snps_task, filter_indels_task])
+
+    # Run VQSR?
 
 
-
-    return genotype_tasks
+    return combine_variants_task
