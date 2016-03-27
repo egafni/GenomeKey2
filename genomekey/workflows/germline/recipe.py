@@ -18,6 +18,11 @@ FASTQ_MAX_CHUNK_SIZE = 2 ** 30 / 2
 FASTQ_MAX_CHUNK_SIZE = 2 ** 20  # 1Mb for testing
 
 
+def mkdir(p, root_path=None):
+    root_path = root_path if root_path else os.getcwd()
+    sp.check_call('cd %s; mkdir -p %s' % (root_path, p), shell=True)
+
+
 def run_germline(execution, max_cores, max_attempts, target_bed, input_path=None, s3fs=None):
     """
     Executes the germline variant calling pipeline
@@ -38,20 +43,22 @@ def run_germline(execution, max_cores, max_attempts, target_bed, input_path=None
     target_bed_tasks = [execution.add_task(bed.filter_bed_by_contig, dict(contig=contig), [cp_target_bed_task], 'work/contigs/{contig}')
                         for contig in util.get_bed_contigs(target_bed)]
 
-    fastq_tasks = list(util.gen_fastq_tasks(execution, input_path))
+    # fastq_tasks = list(util.gen_fastq_tasks(execution, input_path))
+    fastq_tasks = [execution.add_task(load_input, dict(in_file=fastq_path, **tags), stage_name='Load_Fastqs')
+                   for fastq_path, tags in parse_inputs(input_path)]
 
     fastqc_tasks = many2one(fastqc.fastqc, fastq_tasks, ['sample_name', 'library'], out_dir='SM_{sample_name}/qc/LB_{library}')
 
     # fastq_tasks = split_large_fastq_files(execution, fastq_tasks) # not working yet
     aligned_tasks = align(execution, fastq_tasks, target_bed_tasks)
-    called_tasks = variant_call(execution, aligned_tasks, target_bed_tasks)
+    call_task = variant_call(execution, aligned_tasks, target_bed_tasks)
 
     execution.run(max_cores=max_cores, max_attempts=max_attempts,
                   cmd_wrapper=make_s3_cmd_fxn_wrapper(s3fs) if s3fs else shared_fs_cmd_fxn_wrapper)
 
     if execution.successful:
         execution.log.info('Final vcf: %s' % opj(s3fs if s3fs else execution.output_dir,
-                                                 called_tasks[0].output_files[0]))
+                                                 call_task.output_files[0]))
 
 
     # Copy the sqlite db to s3
@@ -88,13 +95,13 @@ def run_germline(execution, max_cores, max_attempts, target_bed, input_path=None
 #
 # for out_fastq in split_task.output_files:
 # yield execution.add_task(load_input, make_dict(fastq_task.tags, in_file=out_fastq),
-#                                              split_task, stage_name='Load_Split_Fastq_Files'
-#                     )
+# split_task, stage_name='Load_Split_Fastq_Files'
+# )
 #
-#             else:
-#                 yield fastq_task
+# else:
+# yield fastq_task
 #
-#     return list(gen())
+# return list(gen())
 
 
 def align(execution, fastq_tasks, target_bed_tasks):
@@ -108,10 +115,18 @@ def align(execution, fastq_tasks, target_bed_tasks):
     """
 
     # Do we need to split fastqs into smaller pieces?
-    trimmed = many2one(fastq.cut_adapt, fastq_tasks, ['sample_name', 'library', 'platform', 'platform_unit', 'rgid', 'chunk'],
-                       out_dir='SM_{sample_name}/work/RG_{rgid}/CH_{chunk}')
+    aligns = []
+    for tags, fastq_task_group in group(fastq_tasks, by=['sample_name', 'library', 'platform', 'platform_unit', 'rgid', 'chunk']):
+        # trim_task = execution.add_task(fastq.trim_galore,
+        #                                tags=dict(**tags),
+        #                                parents=fastq_task_group,
+        #                                out_dir='SM_{sample_name}/work/RG_{rgid}/CH_{chunk}')
 
-    aligns = one2one(bwa.bwa_mem, trimmed, out_dir='SM_{sample_name}/work/RG_{rgid}/CH_{chunk}')
+        align_task = execution.add_task(bwa.bwa_mem,
+                                        tags=dict(**tags),
+                                        parents=fastq_task_group,
+                                        out_dir='SM_{sample_name}/work/RG_{rgid}/CH_{chunk}')
+        aligns.append(align_task)
 
     dedupe = many2one(picard.mark_duplicates, aligns, groupby=['sample_name', 'library'], out_dir='SM_{sample_name}/work/LB_{library}')
 
@@ -154,11 +169,13 @@ def variant_call(ex, aligned_tasks, target_bed_tasks):
     :param list[Task] target_bed_tasks:
     :return:
     """
-    sp.check_call('cd %s; mkdir -p work output' % ex.output_dir, shell=True)
+    mkdir('work output', ex.output_dir)
 
     contig_to_targets = {t.tags['contig']: t for t in target_bed_tasks}
 
-    hapcall_tasks = [ex.add_task(gatk.haplotype_caller, tags=tags, parents=parents + [contig_to_targets[tags['contig']]],
+    hapcall_tasks = [ex.add_task(gatk.haplotype_caller,
+                                 tags=tags,
+                                 parents=parents + [contig_to_targets[tags['contig']]],
                                  out_dir='SM_{sample_name}/work/contigs/{contig}')
                      for tags, parents in group(aligned_tasks, ['sample_name', 'contig'])]
 
@@ -167,7 +184,7 @@ def variant_call(ex, aligned_tasks, target_bed_tasks):
     genotype_task = many2one(gatk.genotype_gvcfs, hapcall_tasks, groupby=[], out_dir='work/variants_raw.vcf')[0]
 
     select_snps_task = ex.add_task(gatk.select_variants,
-                                   tags=dict(in_vcfs=genotype_task.output_files[0],
+                                   tags=dict(in_vcfs=[genotype_task.output_files[0]],
                                              out_vcf='work/snps_raw.vcf',
                                              select_type='SNP'),
                                    parents=genotype_task
@@ -176,12 +193,12 @@ def variant_call(ex, aligned_tasks, target_bed_tasks):
     filter_snps_task = ex.add_task(gatk.variant_filtration,
                                    tags=dict(in_vcfs=[select_snps_task.output_files[0]],
                                              out_vcf='work/snps_filtered.vcf',
-                                             filters=[('QUAL < 30', 'Qual'),
-                                                      ('QD < 2.0', 'QD'),
-                                                      ('FS > 60.0', 'FS'),
-                                                      ('MQ < 40.0', 'MQ'),
-                                                      ('MQRankSum < -12.5', 'MQRankSum'),
-                                                      ('ReadPosRankSum < -8.0', 'ReadPosRankSum')]),
+                                             filters=[('Qual', 'QUAL < 30'),
+                                                      ('QD', 'QD < 2.0'),
+                                                      ('FS_snp', 'FS > 60.0'),
+                                                      ('MQ', 'MQ < 40.0'),
+                                                      ('MQRankSum', 'MQRankSum < -12.5'),
+                                                      ('ReadPosRankSum', 'ReadPosRankSum < -8.0')]),
                                    parents=select_snps_task)
 
     select_indels_task = ex.add_task(gatk.select_variants,
@@ -193,15 +210,16 @@ def variant_call(ex, aligned_tasks, target_bed_tasks):
     filter_indels_task = ex.add_task(gatk.variant_filtration,
                                      tags=dict(in_vcfs=[select_indels_task.output_files[0]],
                                                out_vcf='work/indels_filtered.vcf',
-                                               filters=[('QD < 2.0', 'QD'),
-                                                        ('FS > 200.0', 'FS'),
-                                                        ('ReadPosRankSum < -2', 'ReadPosRankSum')]),
+                                               filters=[('Qual', 'QUAL < 30'),
+                                                        ('QD', 'QD < 2.0'),
+                                                        ('FS_indel', 'FS > 200.0'),
+                                                        ('ReadPosRankSum_indel', 'ReadPosRankSum < -2')]),
                                      parents=select_indels_task)
 
     combine_variants_task = ex.add_task(gatk.combine_variants,
                                         tags=dict(in_vcfs=[filter_indels_task.tags['out_vcf'], filter_snps_task.tags['out_vcf']],
                                                   out_vcf='output/variants.vcf',
-                                                  genotype_merge_options='PRIORITIZE'),
+                                                  genotype_merge_option='PRIORITIZE'),
                                         parents=[filter_snps_task, filter_indels_task])
 
     # Run VQSR?
