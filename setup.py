@@ -41,7 +41,7 @@ setup(
     license="MIT",
     install_requires=[
         'recordtype',
-	    'cosmos-wfm',
+        'cosmos-wfm',
         'configparser',
         'futures',
         'ipdb',

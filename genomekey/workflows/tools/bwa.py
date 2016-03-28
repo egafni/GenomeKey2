@@ -8,7 +8,7 @@ from . import picard
 def bwa_mem(rgid, sample_name, library, platform, platform_unit,
             reference=s['ref']['reference_fasta'],
             core_req=16,
-            in_fastqs=find('.fastq', n=2),
+            in_fastqs=find('.fastq|.fq|.fq.gz|.fastq.gz', n=2),
             out_cutadapt_log=out_dir('cutadapt.log'),
             out_bam=out_dir('aligned.bam'),
             out_bai=out_dir('aligned.bai')):

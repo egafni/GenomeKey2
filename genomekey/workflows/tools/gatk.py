@@ -48,7 +48,7 @@ def realigner_target_creator(core_req=8,
         {args}
     """.format(s=s, gatk=gatk(mem_req),
                args=arg('--intervals', in_target_bed),
-               knowns=' '.join('--known %s' % p for p in in_knowns),
+               knowns=' '.join('-known %s' % p for p in in_knowns),
                **locals())
 
 
@@ -61,6 +61,7 @@ def indel_realigner(core_req=4,  # proxy for mem_req until i test mem_req out
                     out_bam=out_dir('realigned.bam'),
                     out_bai=out_dir('realigned.bai')):
     in_bams = bam_list_to_inputs(in_bams)
+    in_knowns = [s['ref'].get('mills_and_1kg_indel_vcf')] or [s['ref']['1kg_indel_vcf'], s['ref']['mills_vcf']]
     return r"""
         # IR does not support parallelization
         {gatk} \
@@ -69,8 +70,7 @@ def indel_realigner(core_req=4,  # proxy for mem_req until i test mem_req out
         -I {in_bams} \
         -o {out_bam} \
         -targetIntervals {in_sites} \
-        -known {s[ref][1kg_indel_vcf]} \
-        -known {s[ref][mills_vcf]} \
+        {knowns} \
         -model USE_READS \
         --filter_bases_not_stored \
         {intervals}
@@ -79,6 +79,7 @@ def indel_realigner(core_req=4,  # proxy for mem_req until i test mem_req out
     """.format(s=s,
                intervals=arg('--intervals', contig),
                gatk=gatk(mem_req),
+               knowns=' '.join('-known %s' % p for p in in_knowns),
                **locals())
 
 
