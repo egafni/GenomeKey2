@@ -4,7 +4,6 @@ import os
 import sys
 
 from cosmos.api import add_execution_args, Execution
-from genomekey.workflows.germline.recipe import run_germline
 from genomekey.util.misc import assert_references_exist
 from genomekey.api import GenomeKey, settings as s, library_path, s3run, s3cmd
 from genomekey.aws.config import print_env_export
@@ -39,6 +38,10 @@ opj = os.path.join
 #
 #         message = client.messages.create(to=phone_number, from_='+15203086165', body=message)
 
+def germline(*args, **kwargs):
+    # This function exists so that importing run_germline doesn't import the environment before it's initialized
+    from genomekey.workflows.germline.recipe import run_germline
+    run_germline(*args, **kwargs)
 
 def parse_args():
     genomekey = GenomeKey()
@@ -79,8 +82,8 @@ def parse_args():
         #                 action='store_true')
 
 
-    sp = sps.add_parser('germline', help=run_germline.__doc__)
-    sp.set_defaults(func=run_germline)
+    sp = sps.add_parser('germline', help=germline.__doc__)
+    sp.set_defaults(func=germline)
     sp.add_argument('input_path', help='file with inputs')
     sp.add_argument('--config_path', help='genomekey.conf')
     sp.add_argument('-v', '--reference_version', choices=('hg38', 'b37'))
@@ -152,7 +155,7 @@ def parse_args():
 
         config_path = kwargs.pop('config_path')
         if config_path:
-            environment.initialize(config_path)
+            environment.initialize(config_path, kwargs.pop('reference_version'))
 
 
         # required for gof3r, which doesn't check ~/.aws/config files
