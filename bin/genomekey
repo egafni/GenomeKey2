@@ -14,7 +14,7 @@ opj = os.path.join
 
 
 # def do_growl(msg, hostname=os.environ.get('SSH_CLIENT', '').split(' ')[0]):
-#     from cosmos.util import growl
+# from cosmos.util import growl
 #
 #     growl.send(msg, hostname=hostname)
 #
@@ -83,9 +83,10 @@ def parse_args():
     sp.set_defaults(func=run_germline)
     sp.add_argument('input_path', help='file with inputs')
     sp.add_argument('--config_path', help='genomekey.conf')
-    sp.add_argument('--s3fs', '-s3', default=False,
-                    help='EXPERIMENTAL.  upload/download all output files to this s3 bucket.  Removes the need'
-                         'for a shared filesystem')
+    sp.add_argument('-v', '--reference_version', choices=('hg38', 'b37'))
+    # sp.add_argument('--s3fs', '-s3', default=False,
+    #                 help='EXPERIMENTAL.  upload/download all output files to this s3 bucket.  Removes the need'
+    #                      'for a shared filesystem')
     sp.add_argument('--target_bed', '-t', required=True)  # default to whole genome target bed?
     add_execution_args2(sp)
 
@@ -104,7 +105,7 @@ def parse_args():
     # Todo refactor this into functions
     if f.__name__ in workflow_fxns.keys():
         # assert_references_exist()
-        d = {n: kwargs.pop(n) for n in ['name', 'restart', 'skip_confirm',  'comments']}
+        d = {n: kwargs.pop(n) for n in ['name', 'restart', 'skip_confirm', 'comments']}
         comments = d.pop('comments')
         workflow_type = workflow_fxns[f.__name__]
 
