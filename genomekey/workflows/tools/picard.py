@@ -16,7 +16,7 @@ def picard(time_req=8 * 60, mem_req=3 * 1024, extra_java_args=''):
 
 
 # @can_stream([''])
-def mark_duplicates(cpu_req=16,  # for scratch space
+def mark_duplicates(core_req=8,  # for scratch space
                     mem_req=12 * 1024,
                     in_bams=find('bam$', n='>=1'),
                     in_bais=find('bai$', n='>=1'),
@@ -81,4 +81,34 @@ def mark_illumina_adapters(mem_req=8 * 1024,
         METRICS={out_metrics}
     """.format(s=s,
                picard=picard(),
+               **locals())
+
+
+def collect_multiple_metrics(in_bam=find('bam'),
+                             out_path=out_dir('picard'),
+                             reference_fasta=s['ref']['reference_fasta']):
+    return r"""
+      {picard} CollectMultipleMetrics \
+      I={in_bam} \
+      O={out_path} \
+      R={reference_fasta} \
+      {programs}
+    """.format(picard=picard(),
+               programs=' '.join('PROGRAM=%s' % p for p in
+                                 ['CollectAlignmentSummaryMetrics', 'CollectInsertSizeMetrics',
+                                  'QualityScoreDistribution', 'MeanQualityByCycle',
+                                  'CollectBaseDistributionByCycle', 'CollectGcBiasMetrics',
+                                  'CollectSequencingArtifactMetrics', 'CollectQualityYieldMetrics']),
+               **locals())
+
+
+def merge_sam_files(in_bams=find('bam', n='>=1'),
+                    out_bam=out_dir('merged.bam')):
+    return r"""
+        {picard} MergeSamFiles \
+        {inputs} \
+        O={out_bam} \
+        ASSUME_SORTED=true
+    """.format(picard=picard(),
+               inputs=list_to_input(in_bams),
                **locals())

@@ -89,7 +89,7 @@ steps.
 .. code-block:: bash
 
     # starcluster listclusters to get the list of clusters
-    cd StarClusterExtensions/sce/genomekey/fab
+    cd StarClusterExtensions/sce/plugins/genomekey/fab
     fab -f aws.py command -H $CLUSTER_HOST -i $CLUSTER_KEY
     # example:
     cd ~/projects/StarClusterExtensions/sce/plugins/genomekey/fab

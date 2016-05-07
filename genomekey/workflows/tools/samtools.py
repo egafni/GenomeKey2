@@ -12,6 +12,6 @@ def merge(in_bams=find('bam$', n='>0'),
     else:
         in_bams = ' '.join(map(str, in_bams))
         return r"""
-            {s[opt][samtools]} merge {out_bam} {in_bams}
+            {s[opt][samtools]} merge -f {out_bam} {in_bams}
         """.format(s=s, **locals())
 
