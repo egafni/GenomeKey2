@@ -1,5 +1,6 @@
 from cosmos.api import find, out_dir
-from ...api import settings as s
+from genomekey.api import get_env
+s = get_env().config
 
 
 def merge(in_bams=find('bam$', n='>0'),
@@ -15,3 +16,6 @@ def merge(in_bams=find('bam$', n='>0'),
             {s[opt][samtools]} merge -f {out_bam} {in_bams}
         """.format(s=s, **locals())
 
+def view(f, in_bam=find('bam$'), out_bam=out_dir('reads.bam')):
+    return '{s[opt][samtools]} view -f {f} -h {in_bam} > {out_bam}'.format(s=s,
+                                                                           **locals())

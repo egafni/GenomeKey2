@@ -1,7 +1,9 @@
 from .util import parse_inputs
-from genomekey.api import settings as s, make_s3_cmd_fxn_wrapper, s3cmd, s3run, shared_fs_cmd_fxn_wrapper
+from genomekey.api import get_env, make_s3_cmd_fxn_wrapper, s3cmd, s3run, shared_fs_cmd_fxn_wrapper
 
-from ..tools import bwa, picard, gatk, fastqc, bed, fastq
+env = get_env()
+
+from ..tools import bwa, picard, gatk, fastqc, bed, fastq, samtools
 from . import util
 # from genomekey.bin.fastq.split_fastq_file import get_split_paths
 from genomekey.aws.s3 import cmd as s3cmd
@@ -43,9 +45,9 @@ def run_germline(execution, max_cores, max_attempts, target_bed, input_path=None
     target_bed_tasks = [execution.add_task(bed.filter_bed_by_contig, dict(contig=contig), [cp_target_bed_task], 'work/contigs/{contig}')
                         for contig in util.get_bed_contigs(target_bed)]
 
-    # fastq_tasks = list(util.gen_fastq_tasks(execution, input_path))
-    fastq_tasks = [execution.add_task(load_input, dict(in_file=fastq_path, **tags), stage_name='Load_Fastqs')
-                   for fastq_path, tags in parse_inputs(input_path)]
+    fastq_tasks = list(util.gen_fastq_tasks(execution, input_path))
+    # fastq_tasks = [execution.add_task(load_input, dict(in_file=fastq_path, **tags), stage_name='Load_Fastqs')
+    # for fastq_path, tags in parse_inputs(input_path)]
 
     fastqc_tasks = many2one(fastqc.fastqc, fastq_tasks, ['sample_name', 'library'], out_dir='SM_{sample_name}/qc/LB_{library}')
 
@@ -62,7 +64,7 @@ def run_germline(execution, max_cores, max_attempts, target_bed, input_path=None
 
 
     # Copy the sqlite db to s3
-    dburl = s['gk']['database_url']
+    dburl = env.config['gk']['database_url']
     if s3fs and dburl.startswith('sqlite'):
         # TODO implement so there is a 1-to-1 relationship between a sqlite database and an Execution.  Currently this is pushing way too much information,
         # TODO but will soon be replaced.  Alternative: use amazon RDS!  Or perhaps both?  Could do a sqlalchemy merge and save to sqlite, or implement
@@ -118,9 +120,9 @@ def align(execution, fastq_tasks, target_bed_tasks):
     aligns = []
     for tags, fastq_task_group in group(fastq_tasks, by=['sample_name', 'library', 'platform', 'platform_unit', 'rgid', 'chunk']):
         # trim_task = execution.add_task(fastq.trim_galore,
-        #                                tags=dict(**tags),
-        #                                parents=fastq_task_group,
-        #                                out_dir='SM_{sample_name}/work/RG_{rgid}/CH_{chunk}')
+        # tags=dict(**tags),
+        # parents=fastq_task_group,
+        # out_dir='SM_{sample_name}/work/RG_{rgid}/CH_{chunk}')
 
         align_task = execution.add_task(bwa.bwa_mem,
                                         tags=dict(**tags),
@@ -147,6 +149,17 @@ def align(execution, fastq_tasks, target_bed_tasks):
                  for target_bed_task in target_bed_tasks]  # One2many
 
     realigned_by_sample_contig_tasks = one2one(gatk.indel_realigner, rtc_tasks)
+    realigned_by_sample_contig_tasks += [execution.add_task(samtools.view,
+                                                            dict(out_bam=out_dir('both_pairs_unmapped.bam' % lb_task),
+                                                                 f='12',
+                                                                 sample_name=tags['sample_name'],
+                                                                 contig='BOTH_PAIRS_UNMAPPED',
+                                                                 library=lb_task.tags['library']),
+                                                            parents=lb_task,
+                                                            out_dir='SM_{sample_name}/work/LB_{library}',
+                                                            stage_name='Filter_Both_Pairs_Unmapped')
+                                         for tags, sm_tasks in group(dedupe, ['sample_name'])
+                                         for lb_task in sm_tasks]
 
 
     # Skipping BQSR.  Will improve results only slightly, if at all.
@@ -157,7 +170,7 @@ def align(execution, fastq_tasks, target_bed_tasks):
     merged = many2one(picard.merge_sam_files, realigned_by_sample_contig_tasks, ['sample_name'], out_dir='SM_{sample_name}', stage_name="Merge_Sample_Bams")
     one2one(picard.collect_multiple_metrics, merged, out_dir='SM_{sample_name}/metrics')
 
-    return realigned_by_sample_contig_tasks
+    return merged
 
 
 def variant_call(ex, aligned_tasks, target_bed_tasks):
@@ -174,10 +187,11 @@ def variant_call(ex, aligned_tasks, target_bed_tasks):
     contig_to_targets = {t.tags['contig']: t for t in target_bed_tasks}
 
     hapcall_tasks = [ex.add_task(gatk.haplotype_caller,
-                                 tags=tags,
-                                 parents=parents + [contig_to_targets[tags['contig']]],
+                                 tags=dict(contig=contig, **tags),
+                                 parents=parents + [target_bed_task],
                                  out_dir='SM_{sample_name}/work/contigs/{contig}')
-                     for tags, parents in group(aligned_tasks, ['sample_name', 'contig'])]
+                     for tags, parents in group(aligned_tasks, ['sample_name'])
+                     for contig, target_bed_task in contig_to_targets.items()]
 
     # combine_gvcf_tasks = many2one(gatk.combine_gvcfs, hapcall_tasks, groupby=['sample_name'], out_dir='SM_{sample_name}')
 

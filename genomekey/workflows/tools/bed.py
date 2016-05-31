@@ -1,6 +1,6 @@
 from cosmos.api import find, out_dir
-from genomekey.api import settings as s
-
+from genomekey.api import get_env
+s = get_env().config
 
 def filter_bed_by_contig(contig,
                        drm='local',

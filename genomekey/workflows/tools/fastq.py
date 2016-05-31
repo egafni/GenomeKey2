@@ -1,6 +1,8 @@
 from cosmos.api import find, out_dir, args
-from genomekey.api import can_stream, settings as s, library_path
+from genomekey.api import can_stream, library_path
 import os
+from genomekey.api import get_env
+s = get_env().config
 
 bin = lambda p: os.path.join(library_path, 'bin', p)
 

@@ -1,9 +1,11 @@
 import os
 
 from cosmos.api import find, out_dir
-from ...api import settings as s
 from genomekey.api import can_stream
 from cosmos.util.helpers import random_str
+from genomekey.api import get_env
+s = get_env().config
+
 
 # cpu_req is high so nodes don't run out of scratch
 @can_stream(['in_r1s', 'in_r2s'])

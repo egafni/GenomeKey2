@@ -1,5 +1,6 @@
 from cosmos.api import find, out_dir
-from ...api import settings as s
+from genomekey.api import get_env
+s = get_env().config
 from genomekey.api import can_stream
 from . import picard
 

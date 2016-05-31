@@ -2,7 +2,6 @@ import re
 import os
 import decorator
 import sys
-from genomekey.api import settings as s
 from cosmos.core.cmd_fxn.io import Forward
 import random
 import subprocess as sp
@@ -15,6 +14,8 @@ import jinja2
 from cosmos.api import NOOP
 from cosmos.util.iterstuff import partition
 from . import cmd as s3cmd
+from genomekey.api import get_env
+
 
 opj = os.path.join
 
@@ -100,6 +101,7 @@ def shared_fs_cmd_fxn_wrapper(task, stage_name, input_map, output_map):
 
 
 def make_s3_cmd_fxn_wrapper(s3_path):
+    s = get_env().config
     def s3_cmd_fxn_wrapper(task, stage_name, input_map, output_map):
         """
         Create and cd into a tmp dir

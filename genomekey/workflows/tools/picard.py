@@ -1,5 +1,7 @@
 from cosmos.api import find, out_dir
-from genomekey.api import settings as s, can_stream
+from genomekey.api import can_stream
+from genomekey.api import get_env
+s = get_env().config
 
 
 def list_to_input(l):
@@ -16,7 +18,7 @@ def picard(time_req=8 * 60, mem_req=3 * 1024, extra_java_args=''):
 
 
 # @can_stream([''])
-def mark_duplicates(core_req=8,  # for scratch space
+def mark_duplicates(core_req=4,  # for scratch space
                     mem_req=12 * 1024,
                     in_bams=find('bam$', n='>=1'),
                     in_bais=find('bai$', n='>=1'),
@@ -103,12 +105,14 @@ def collect_multiple_metrics(in_bam=find('bam'),
 
 
 def merge_sam_files(in_bams=find('bam', n='>=1'),
-                    out_bam=out_dir('merged.bam')):
+                    out_bam=out_dir('merged.bam'),
+                    out_bai=out_dir('merged.bai')):
     return r"""
         {picard} MergeSamFiles \
         {inputs} \
         O={out_bam} \
-        ASSUME_SORTED=true
+        ASSUME_SORTED=True \
+        CREATE_INDEX=True
     """.format(picard=picard(),
                inputs=list_to_input(in_bams),
                **locals())

@@ -1,5 +1,6 @@
 from cosmos.api import find, out_dir, forward, arg, args
-from genomekey.api import settings as s
+from genomekey.api import get_env
+s = get_env().config
 
 bam_list_to_inputs = lambda l: " -I ".join(map(str, l))
 
@@ -33,7 +34,10 @@ def realigner_target_creator(core_req=8,
                              out_sites=out_dir('denovo_realign_targets.bed')):
     in_bams = bam_list_to_inputs(in_bams)
 
-    in_knowns = [s['ref'].get('mills_and_1kg_indel_vcf')] or [s['ref']['1kg_indel_vcf'], s['ref']['mills_vcf']]
+    if s['ref']['version'] == 'b37':
+        in_knowns = s['ref']['1kg_indel_vcf'], s['ref']['mills_vcf']
+    elif s['ref']['version'] == 'hg38':
+        in_knowns = [s['ref']['mills_and_1kg_indel_vcf']]
 
     # TODO should we pad intervals?  might be indels on perimeter that need realigner.  Not too worried because we're using HaplotypeCaller, though.
     return r"""
@@ -61,7 +65,12 @@ def indel_realigner(core_req=4,  # proxy for mem_req until i test mem_req out
                     out_bam=out_dir('realigned.bam'),
                     out_bai=out_dir('realigned.bai')):
     in_bams = bam_list_to_inputs(in_bams)
-    in_knowns = [s['ref'].get('mills_and_1kg_indel_vcf')] or [s['ref']['1kg_indel_vcf'], s['ref']['mills_vcf']]
+
+    if s['ref']['version'] == 'b37':
+        in_knowns = s['ref']['1kg_indel_vcf'], s['ref']['mills_vcf']
+    elif s['ref']['version'] == 'hg38':
+        in_knowns = [s['ref']['mills_and_1kg_indel_vcf']]
+
     return r"""
         # IR does not support parallelization
         {gatk} \
@@ -83,8 +92,8 @@ def indel_realigner(core_req=4,  # proxy for mem_req until i test mem_req out
                **locals())
 
 
-def haplotype_caller(core_req=8,
-                     mem_req=16 * 1024,
+def haplotype_caller(core_req=16,
+                     mem_req=12 * 1024,
                      in_bams=find('bam$', n='>0'),
                      in_bais=find('bai$', n='>0'),
                      in_target_bed=find('target.bed'),
@@ -100,14 +109,12 @@ def haplotype_caller(core_req=8,
         --emitRefConfidence GVCF \
         -stand_call_conf 30 \
         -stand_emit_conf 10 \
-        -I {in_bams} \
-        -o {out_vcf} \
+        -I {in_bams} \        -o {out_vcf} \
         {intervals} \
         -A Coverage \
         -A GCContent \
         -A AlleleBalanceBySample \
         -A AlleleBalance \
-        -A HaplotypeScore \
         -A MappingQualityRankSumTest \
         -A InbreedingCoeff \
         -A FisherStrand \
