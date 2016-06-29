@@ -104,6 +104,16 @@ def collect_multiple_metrics(in_bam=find('bam'),
                **locals())
 
 
+def collect_variant_calling_metrics(in_vcf=find('in_vcf'),
+                                    in_dbsnp=s['ref']['dbsnp_vcf'],
+                                    out_path=out_dir('picard.variant_metrics')):
+    return r"""
+        {picard} CollectVariantCallingMetrics \
+        I={in_vcf} \
+        DBSNP={in_dbsnp} \
+        O={out_path}
+    """.format(picard=picard(), **locals())
+
 def merge_sam_files(in_bams=find('bam', n='>=1'),
                     out_bam=out_dir('merged.bam'),
                     out_bai=out_dir('merged.bai')):
