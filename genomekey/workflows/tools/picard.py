@@ -100,7 +100,8 @@ def collect_multiple_metrics(in_bam=find('bam'),
                                  ['CollectAlignmentSummaryMetrics', 'CollectInsertSizeMetrics',
                                   'QualityScoreDistribution', 'MeanQualityByCycle',
                                   'CollectBaseDistributionByCycle', 'CollectGcBiasMetrics',
-                                  'CollectSequencingArtifactMetrics', 'CollectQualityYieldMetrics']),
+                                  'CollectSequencingArtifactMetrics', 'CollectQualityYieldMetrics',
+                                  'CollectWgsMetrics']),
                **locals())
 
 
