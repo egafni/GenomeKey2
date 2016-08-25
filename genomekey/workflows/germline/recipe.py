@@ -238,7 +238,8 @@ def variant_call(ex, aligned_tasks, target_bed_tasks):
 
     variant_stats_task = ex.add_task(picard.collect_variant_calling_metrics,
                                      tags=dict(in_vcf=combine_variants_task.tags['out_vcf'],
-                                               out_path='output/picard'))
+                                               out_path='output/picard'),
+                                     parents=[combine_variants_task])
 
     # Run VQSR?
 
